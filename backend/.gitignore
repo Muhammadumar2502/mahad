@@ -1,0 +1,31 @@
+# build
+/dist
+/node_modules
+/build
+/coverage
+
+# env
+.env
+.env.*
+!.env.example
+
+# foydalanuvchi yuklagan fayllar (Docker volume'da saqlanadi)
+/public/books/*
+/public/sections/*
+/public/subjects/*
+!/public/**/.gitkeep
+
+# dump'lar
+*.sql
+!manual_migration.sql
+!/prisma/**/*.sql
+!/migrations/**/*.sql
+
+# logs / OS / IDE
+logs
+*.log
+npm-debug.log*
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json

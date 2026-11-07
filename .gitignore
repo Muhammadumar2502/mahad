@@ -1,0 +1,41 @@
+# ---- maxfiy va mahalliy ----
+.env
+.env.*
+!.env.example
+!mobile/.env.example
+# Mobil ilova .env ni asset sifatida o'qiydi (maxfiy emas, faqat server manzili)
+!mobile/.env
+
+# ---- zaxira nusxalar va eski kodlar (git'ga tushmaydi!) ----
+/backups/
+/_legacy/
+*.sql
+*.sql.gz
+*.tgz
+*.bundle
+!backend/manual_migration.sql
+!backend/prisma/**/*.sql
+!backend/migrations/**/*.sql
+/deploy/mysql/init/*
+!/deploy/mysql/init/.gitkeep
+
+# ---- node ----
+node_modules/
+dist/
+coverage/
+*.log
+npm-debug.log*
+
+# ---- OS / IDE ----
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+
+# ---- Claude Code lokal sozlamalari ----
+.claude/
+
+# lokal sinov akkaunti
+.test-student

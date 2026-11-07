@@ -1,0 +1,17 @@
+model TestItem {
+  id    Int     @default(autoincrement()) @id
+  number Int?
+  question String? @db.Text
+  answer_A String? @db.Text
+  answer_B String? @db.Text
+  answer_C String? @db.Text
+  answer_D String? @db.Text
+  answer ANSWER?
+
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  test  Test?    @relation(fields: [test_id], references: [id])
+  test_id  Int?
+ 
+}

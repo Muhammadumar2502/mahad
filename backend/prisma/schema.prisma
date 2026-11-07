@@ -1,0 +1,323 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+ 
+}
+
+
+generator client {
+  provider = "prisma-client-js"
+
+}
+
+
+
+enum Role {
+   ADMIN
+   STUDENT
+   TEACHER
+}
+
+enum DeviceType {
+   ANDROID
+   IOS
+   WEB
+}
+
+
+enum ANSWER {
+   A
+   B
+   C
+   D
+   E
+}
+
+
+
+model Admin {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  phone String  @unique
+  password String
+
+  role Role @default(ADMIN)
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Device {
+  id                 Int         @id @default(autoincrement())
+  device_name        String
+  device_type        DeviceType
+  device_identifier  String
+  ip_address         String?
+  user_agent         String?     @db.Text
+  is_active          Boolean     @default(true)
+  is_blocked         Boolean     @default(false)
+  last_active        DateTime    @default(now())
+  last_api_endpoint  String?
+  last_api_method    String?
+  app_version        String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  
+  student            Student     @relation(fields: [student_id], references: [id])
+  student_id         Int         @unique
+  
+  @@index([student_id, is_active])
+  @@index([device_identifier])
+}
+
+// model Book {
+//   id    Int     @default(autoincrement()) @id
+//   name  String?
+//   image  String?
+//   createdt        DateTime           @default(now())
+//   updatedAt        DateTime           @updatedAt
+  
+//   subject  Subject?    @relation(fields: [subject_id], references: [id])
+//   subject_id  Int?
+
+//   sections Section[]
+//   groups Group[]
+
+  
+// }
+
+// model Group {
+//   id    Int     @default(autoincrement()) @id
+//   name  String?
+//   students Student[]
+//   books Book[]
+//   fullBlock Boolean @default(false)
+//   stepBlock Boolean @default(true)
+
+//   createdt        DateTime           @default(now())
+//   updatedAt        DateTime           @updatedAt
+  
+// }
+
+
+model Book {
+  id        Int         @id @default(autoincrement())
+  name      String?
+  image     String?
+  createdt  DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  subject    Subject?    @relation(fields: [subject_id], references: [id])
+  subject_id Int?
+
+  sections   Section[]
+  specialTestBooks SpecialTestBook[]
+
+  fullBlock  Boolean     @default(false)
+  stepBlock  Boolean     @default(true)
+  passingPercentage Int  @default(60)
+  // bookGroups BookGroup[] // <-- use this instead of direct groups
+}
+
+model Group {
+  id         Int         @id @default(autoincrement())
+  name       String?
+  students   Student[]
+
+  hasTime Boolean?     @default(false)
+  timeMinutes Int? @default(0)
+  fullTime   Int? @default(0)
+  forceNextQuestion Boolean? @default(false)
+
+
+  createdt   DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+
+  specialTestGroups SpecialTestGroup[]
+  // bookGroups BookGroup[] // <-- use this instead of direct books
+}
+
+// model BookGroup {
+//   bookId Int
+//   groupId Int
+//   assignedAt DateTime @default(now())
+
+//   book   Book  @relation(fields: [bookId], references: [id])
+//   group  Group @relation(fields: [groupId], references: [id])
+
+//   @@id([bookId, groupId])
+// }
+
+
+model Result {
+  id    Int     @default(autoincrement()) @id
+  solved  Int?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  startTime        DateTime?
+  finishTime       DateTime?
+
+  test  Test?    @relation(fields: [test_id], references: [id])
+  test_id  Int?
+
+  specialTest SpecialTest? @relation(fields: [special_test_id], references: [id])
+  special_test_id Int?
+
+  answers Json
+  student  Student?    @relation(fields: [student_id], references: [id])
+  student_id  Int?
+  type String? @default("Book")
+}
+
+model Section {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  image  String?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  book  Book?    @relation(fields: [book_id], references: [id])
+  book_id  Int?
+  
+  test  Test?
+
+  specialTestSections SpecialTestSection[]
+}
+
+model Student {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  phone String  @unique
+  password String
+  group    Group?    @relation(fields: [group_id], references: [id])
+  group_id  Int?
+
+  results Result[]
+  device  Device?
+  role Role @default(STUDENT)
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model Subject {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  image  String?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  books Book[]
+ 
+}
+
+model Teacher {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  phone String  @unique
+  password String
+
+  role Role @default(TEACHER)
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+}
+
+model TestItem {
+  id    Int     @default(autoincrement()) @id
+  number Int?
+  question String? @db.LongText
+  answer_A String? @db.LongText
+  answer_B String? @db.LongText
+  answer_C String? @db.LongText
+  answer_D String? @db.LongText
+  answer ANSWER?
+
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  test  Test?    @relation(fields: [test_id], references: [id])
+  test_id  Int?
+ 
+}
+
+model Test {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  section    Section?    @relation(fields: [section_id], references: [id])
+  section_id  Int?  @unique
+  
+  test_items TestItem[]
+  results Result[]
+}
+
+model SpecialTest {
+  id                Int                @id @default(autoincrement())
+  name              String
+  description       String?
+  subject_id        Int
+  activation_start  DateTime?
+  activation_end    DateTime?
+  time_per_question Int?
+  total_time        Int?
+  force_next_question Boolean?       @default(false)
+  question_count    Int
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  questions         SpecialTestQuestion[]
+  specialTestGroups SpecialTestGroup[]
+  specialTestBooks  SpecialTestBook[]
+  specialTestSections SpecialTestSection[]
+  results           Result[]
+}
+
+model SpecialTestQuestion {
+  id          Int      @id @default(autoincrement())
+  number      Int
+  question    String   @db.LongText
+  answer_A    String   @db.LongText
+  answer_B    String   @db.LongText
+  answer_C    String?  @db.LongText
+  answer_D    String?  @db.LongText
+  answer      String   @db.LongText
+  specialTest SpecialTest @relation(fields: [specialTestId], references: [id], onDelete: Cascade)
+  specialTestId Int
+}
+
+model SpecialTestGroup {
+  id           Int      @id @default(autoincrement())
+  specialTest  SpecialTest @relation(fields: [specialTestId], references: [id])
+  specialTestId Int
+  group        Group @relation(fields: [groupId], references: [id])
+  groupId      Int
+
+  @@unique([specialTestId, groupId])
+}
+
+model SpecialTestSection {
+  id           Int      @id @default(autoincrement())
+  specialTest  SpecialTest @relation(fields: [specialTestId], references: [id])
+  specialTestId Int
+  section      Section @relation(fields: [sectionId], references: [id])
+  sectionId    Int
+
+  @@unique([specialTestId, sectionId])
+}
+
+model SpecialTestBook {
+  id           Int      @id @default(autoincrement())
+  specialTest  SpecialTest @relation(fields: [specialTestId], references: [id])
+  specialTestId Int
+  book         Book @relation(fields: [bookId], references: [id])
+  bookId       Int
+
+  @@unique([specialTestId, bookId])
+}

@@ -1,0 +1,18 @@
+model Result {
+  id    Int     @default(autoincrement()) @id
+  solved  Int?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+
+  test  Test?    @relation(fields: [test_id], references: [id])
+  test_id  Int?
+
+  specialTest SpecialTest? @relation(fields: [special_test_id], references: [id])
+  special_test_id Int?
+
+  answers Json
+  student  Student?    @relation(fields: [student_id], references: [id])
+  student_id  Int?
+  type String? @default("Book")
+}

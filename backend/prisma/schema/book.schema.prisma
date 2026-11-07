@@ -1,0 +1,16 @@
+model Book {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  image  String?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  fullBlock Boolean @default(false)
+  stepBlock Boolean @default(false)
+  passingPercentage Int @default(60)
+  
+  subject  Subject?    @relation(fields: [subject_id], references: [id])
+  subject_id  Int?
+
+  sections Section[]
+  
+}

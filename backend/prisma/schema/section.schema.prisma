@@ -1,0 +1,13 @@
+model Section {
+  id    Int     @default(autoincrement()) @id
+  name  String?
+  image  String?
+  createdt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  
+  book  Book?    @relation(fields: [book_id], references: [id])
+  book_id  Int?
+
+  test Test?
+  
+}

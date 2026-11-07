@@ -1,0 +1,16 @@
+# Root kontekst faqat nginx image uchun (web + deploy/nginx) ishlatiladi.
+**/node_modules
+**/dist
+**/.env
+**/.env.*
+.git
+.claude
+_legacy
+backups
+mobile
+backend
+deploy/mysql
+*.sql
+*.sql.gz
+*.tgz
+*.bundle
