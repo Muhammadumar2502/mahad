@@ -6,6 +6,7 @@ import '../books/books_tab.dart';
 import '../profile/profile_tab.dart';
 import '../saved/saved_tab.dart';
 import 'home_tab.dart';
+import '../quiz/quiz_sync.dart';
 
 class MainShell extends StatefulWidget {
   const MainShell({super.key});
@@ -16,6 +17,19 @@ class MainShell extends StatefulWidget {
 
 class _MainShellState extends State<MainShell> {
   int _index = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Yuborilmay qolgan natijalarni fonda yuborish (ochilganda + har daqiqa).
+    QuizSync.start();
+  }
+
+  @override
+  void dispose() {
+    QuizSync.stop();
+    super.dispose();
+  }
   final _savedKey = GlobalKey<SavedTabState>();
   final _homeKey = GlobalKey<HomeTabState>();
 

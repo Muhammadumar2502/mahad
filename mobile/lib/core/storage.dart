@@ -71,9 +71,11 @@ class Storage {
 
   /// Chiqishda: token, user va test sessiyalari o'chadi.
   /// Qurilma identifikatori va saqlanganlar qoladi.
-  static Future<void> clearSession() async {
+  static Future<void> clearSession({bool keepQuizzes = false}) async {
     await _box.remove(_token);
-    await _box.remove(_user);
-    await clearAllQuizzes();
+    if (!keepQuizzes) {
+      await _box.remove(_user);
+      await clearAllQuizzes();
+    }
   }
 }

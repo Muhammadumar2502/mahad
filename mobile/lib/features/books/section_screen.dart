@@ -77,6 +77,7 @@ class _SectionScreenState extends State<SectionScreen> {
       body: AsyncView<SectionDetail>(
         key: _view,
         load: () => Repo.section(widget.sectionId),
+        refreshInterval: const Duration(seconds: 60),
         builder: (context, s, refresh) {
           final pending = s.testId == null ? null : QuizSession.load(QuizLauncher.bookKey(s.testId!));
           final pass = s.book?.passingPercentage ?? widget.passPercent ?? 60;

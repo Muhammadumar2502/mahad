@@ -16,6 +16,7 @@ class RateScreen extends StatelessWidget {
     return Scaffold(
       body: AsyncView<List<RateEntry>>(
         load: Repo.rating,
+        refreshInterval: const Duration(seconds: 30),
         builder: (context, list, refresh) => RefreshIndicator(
           color: AppColors.primary,
           onRefresh: refresh,

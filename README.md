@@ -9,9 +9,11 @@ Monorepo: **backend** (NestJS + Prisma + MySQL + Redis), **web** (admin panel, R
 ├── mobile/               Flutter ilova (Android / iOS)
 ├── deploy/
 │   ├── nginx/            nginx.conf + Dockerfile (web build + gzip + proxy)
+│   ├── backup/           kunlik avtomatik zaxira skripti (konteyner ichida)
 │   ├── mysql/init/       birinchi ishga tushishda yuklanadigan dump (*.sql.gz) — git'ga tushmaydi
 │   └── scripts/          backup.sh, restore.sh
-├── docker-compose.yml    mysql + redis + backend + nginx
+├── docker-compose.yml    mysql + redis + backend + nginx + backup
+├── Makefile              qisqa komandalar (make up / logs / backup ...)
 └── .env.example
 ```
 
@@ -36,16 +38,27 @@ Monorepo: **backend** (NestJS + Prisma + MySQL + Redis), **web** (admin panel, R
   (`CacheInvalidationInterceptor`). Redis ishlamasa ham backend keshsiz ishlayveradi.
 * **nginx**: web statikasi oldindan gzip qilingan (`gzip_static`), API javoblari gzip,
   `/assets/*` 1 yil kesh, rasmlar to'g'ridan-to'g'ri volume'dan.
+* **Hammasi Docker'da** — PM2, host'dagi Node yoki cron kerak emas. Har servis `restart: unless-stopped`
+  (server qayta yoqilsa o'zi ko'tariladi), healthcheck bilan, loglar 3×10 MB bilan cheklangan.
+* **backup** konteyneri har kuni `BACKUP_TIME` (UTC) da baza + rasmlarni `backups/<sana>/` ga saqlaydi,
+  `BACKUP_KEEP_DAYS` kundan eskilarini o'chiradi.
 * **Eski mobil ilovalar** (`http://<ip>:3333/api/v1`) o'zgarishsiz ishlaydi — 3333 port nginx orqali backendga boradi.
 
 ## Tez ishga tushirish
 
 ```bash
-cp .env.example .env        # parollar va JWT_SECRET ni o'zgartiring
-docker compose up -d --build
-docker compose ps           # hammasi "healthy" bo'lishi kerak
-curl http://localhost/api/v1/health
+make env        # .env yaratadi, parollar avtomatik generatsiya qilinadi
+make up         # build + ishga tushirish
+make health     # {"status":"ok","db":true,"redis":true,...}
 ```
+
+| Komanda | Nima qiladi |
+|---|---|
+| `make ps` / `make logs` | holat / backend loglari |
+| `make backup` | darhol zaxira → `backups/<sana>/` |
+| `make restore DB=... UPLOADS=...` | zaxiradan tiklash |
+| `make update` | `git pull` + qayta build |
+| `make down` | to'xtatish (ma'lumotlar volume'da saqlanadi) |
 
 ## Eski serverdan ko'chirish
 
@@ -55,11 +68,12 @@ curl http://localhost/api/v1/health
 2. Yangi serverda: Docker o'rnating, repo'ni klon qiling, `.env` ni to'ldiring.
 3. Tiklash:
    ```bash
-   ./deploy/scripts/restore.sh backups/mahad_test_db_XXXX.sql.gz backups/mahad_public_XXXX.tgz
+   make restore DB=backups/mahad_test_db_XXXX.sql.gz UPLOADS=backups/mahad_public_XXXX.tgz
    ```
    (Yoki dump'ni `deploy/mysql/init/` ga qo'yib `docker compose up -d` — bo'sh bazaga avtomatik yuklanadi.)
-4. Eski serverda `pm2 stop Mahad-backend mahad-test-web` (portlar to'qnashmasligi uchun), IP/DNS ni yangi serverga yo'naltiring.
-5. Muntazam zaxira (cron): `0 3 * * * /path/to/repo/deploy/scripts/backup.sh`
+4. **Eski** serverdagi PM2 jarayonlarini to'xtating (yangi tizim PM2 ishlatmaydi): `pm2 stop Mahad-backend mahad-test-web`,
+   so'ng IP/DNS ni yangi serverga yo'naltiring.
+5. Zaxira avtomatik — `backup` konteyneri har kuni ishlaydi, qo'shimcha sozlash shart emas.
 
 ## Mobil ilova
 

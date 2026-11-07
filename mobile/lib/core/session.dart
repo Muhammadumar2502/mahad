@@ -18,6 +18,13 @@ class Session {
 
   static bool get isLoggedIn => Storage.token != null && Storage.user != null;
 
+  /// Boshqa o'quvchi kirsa, oldingisining qolgan test sessiyalari tozalanadi.
+  static Future<void> onLogin(int userId, {int? previousUserId}) async {
+    if (previousUserId != null && previousUserId != userId) {
+      await Storage.clearAllQuizzes();
+    }
+  }
+
   static GroupInfo? _group;
   static DateTime? _groupLoadedAt;
 
@@ -33,10 +40,12 @@ class Session {
 
   static GroupInfo? get cachedGroup => _group;
 
-  static Future<void> clear() async {
+  /// [expired] — token eskirgan / qurilma o'chirilgan: yuborilmagan natijalar va
+  /// oxirgi foydalanuvchi saqlanadi (qayta kirgach avtomatik yuboriladi).
+  static Future<void> clear({bool expired = false}) async {
     _group = null;
     _groupLoadedAt = null;
-    await Storage.clearSession();
+    await Storage.clearSession(keepQuizzes: expired);
   }
 
   static void toast(String message, {bool error = false}) {

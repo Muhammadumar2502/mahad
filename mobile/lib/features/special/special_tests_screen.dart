@@ -19,6 +19,7 @@ class SpecialTestsScreen extends StatefulWidget {
 }
 
 class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
+  SpecialStatus? _filter; // null — hammasi
   final _view = GlobalKey<AsyncViewState<List<SpecialTest>>>();
   Timer? _ticker;
 
@@ -26,7 +27,7 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
   void initState() {
     super.initState();
     // Holatlar (boshlanmagan -> faol -> tugagan) real vaqtda yangilansin.
-    _ticker = Timer.periodic(const Duration(seconds: 30), (_) {
+    _ticker = Timer.periodic(const Duration(seconds: 15), (_) {
       if (mounted) setState(() {});
     });
   }
@@ -109,21 +110,71 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
       body: AsyncView<List<SpecialTest>>(
         key: _view,
         load: _load,
+        refreshInterval: const Duration(seconds: 60),
         isEmpty: (l) => l.isEmpty,
         emptyTitle: "Hozircha maxsus test yo'q",
         emptySubtitle: 'Admin test biriktirganda shu yerda paydo bo\'ladi',
         emptyIcon: Iconsax.star,
-        builder: (context, list, refresh) => RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: refresh,
-          child: ListView.separated(
-            physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: list.length,
-            separatorBuilder: (_, _) => const SizedBox(height: 14),
-            itemBuilder: (_, i) => _card(list[i]),
-          ),
-        ),
+        builder: (context, all, refresh) {
+          final now = ApiClient.instance.serverNow;
+          int count(SpecialStatus st) => all.where((t) => t.statusAt(now) == st).length;
+          final list = _filter == null ? all : all.where((t) => t.statusAt(now) == _filter).toList();
+          Widget chip(String label, SpecialStatus? v) {
+            final sel = _filter == v;
+            return Padding(
+              padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
+              child: ChoiceChip(
+                label: Text(label),
+                selected: sel,
+                showCheckmark: false,
+                selectedColor: AppColors.primarySoft,
+                labelStyle: TextStyle(color: sel ? AppColors.primaryDark : AppColors.text, fontWeight: sel ? FontWeight.w600 : FontWeight.w400),
+                side: BorderSide(color: sel ? AppColors.primary : AppColors.border),
+                onSelected: (_) => setState(() => _filter = v),
+              ),
+            );
+          }
+
+          return RefreshIndicator(
+            color: AppColors.primary,
+            onRefresh: refresh,
+            child: CustomScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              slivers: [
+                SliverToBoxAdapter(
+                  child: SizedBox(
+                    height: 52,
+                    child: ListView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      children: [
+                        chip('Hammasi (${all.length})', null),
+                        chip('Faol (${count(SpecialStatus.active)})', SpecialStatus.active),
+                        chip('Boshlanmagan (${count(SpecialStatus.upcoming)})', SpecialStatus.upcoming),
+                        chip('Yechilgan (${count(SpecialStatus.done)})', SpecialStatus.done),
+                        chip('Tugagan (${count(SpecialStatus.expired)})', SpecialStatus.expired),
+                      ],
+                    ),
+                  ),
+                ),
+                if (list.isEmpty)
+                  const SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: EmptyView(title: "Bu bo'limda test yo'q", icon: Iconsax.filter_remove),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.all(16),
+                    sliver: SliverList.separated(
+                      itemCount: list.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 14),
+                      itemBuilder: (_, i) => _card(list[i]),
+                    ),
+                  ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }

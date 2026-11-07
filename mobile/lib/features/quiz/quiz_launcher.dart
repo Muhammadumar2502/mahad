@@ -118,6 +118,7 @@ class QuizLauncher {
           items: full.questions,
           timing: full.timing,
           specialId: full.id,
+          activeUntil: full.end,
         );
         await s.save();
         return s;
@@ -143,7 +144,7 @@ class QuizLauncher {
     for (final raw in _rawAll()) {
       try {
         final s = QuizSession.fromJson(raw);
-        if (s.questions.isNotEmpty) yield s;
+        if (s.questions.isNotEmpty && s.belongsToCurrentUser) yield s;
       } catch (_) {}
     }
   }

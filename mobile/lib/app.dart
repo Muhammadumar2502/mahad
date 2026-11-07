@@ -6,6 +6,7 @@ import 'core/theme.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/splash_screen.dart';
 import 'features/auth/update_screen.dart';
+import 'features/quiz/quiz_sync.dart';
 
 class MahadApp extends StatefulWidget {
   const MahadApp({super.key});
@@ -16,6 +17,7 @@ class MahadApp extends StatefulWidget {
 
 class _MahadAppState extends State<MahadApp> {
   bool _handling = false;
+  late final AppLifecycleListener _lifecycle;
 
   @override
   void initState() {
@@ -23,13 +25,22 @@ class _MahadAppState extends State<MahadApp> {
     final api = ApiClient.instance;
     api.onSessionExpired = _onSessionExpired;
     api.onUpgradeRequired = _onUpgradeRequired;
+    // Ilova fondan qaytganda yuborilmagan natijalarni darhol yuborish.
+    _lifecycle = AppLifecycleListener(onResume: QuizSync.run);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle.dispose();
+    super.dispose();
   }
 
   /// 401: token eskirgan, qurilma bloklangan / faol emas / topilmadi.
   Future<void> _onSessionExpired(String message) async {
     if (_handling) return;
     _handling = true;
-    await Session.clear();
+    QuizSync.stop();
+    await Session.clear(expired: true);
     Session.navigatorKey.currentState?.pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => LoginScreen(initialMessage: message)),
       (_) => false,

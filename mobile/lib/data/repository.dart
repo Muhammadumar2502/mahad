@@ -1,5 +1,6 @@
 import '../core/api_client.dart';
 import '../core/device.dart';
+import '../core/session.dart';
 import '../core/storage.dart';
 import 'models.dart';
 
@@ -29,6 +30,8 @@ class Repo {
     if (user.role != 'STUDENT') {
       throw ApiException("Bu ilova faqat o'quvchilar uchun. Admin/ustozlar web paneldan foydalanadi");
     }
+    final previous = asInt(Storage.user?['id']);
+    await Session.onLogin(user.id, previousUserId: previous);
     await Storage.setToken(token);
     await Storage.setUser(user.toStorage());
     return user;
@@ -143,8 +146,9 @@ class Repo {
     required DateTime startedAt,
   }) async {
     // Backend: finishTime > server_now bo'lsa xato beradi — server soati bo'yicha olamiz.
+    // startedAt allaqachon server vaqtida (AppClock).
     final finish = _api.serverNow.subtract(const Duration(seconds: 2));
-    var start = startedAt.add(_api.serverNow.difference(DateTime.now()));
+    var start = startedAt;
     if (start.isAfter(finish)) start = finish;
     await _api.post('/result', data: {
       if (testId != null) 'test_id': testId,

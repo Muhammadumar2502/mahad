@@ -1,5 +1,7 @@
 import 'dart:math';
 
+import '../../core/clock.dart';
+import '../../core/session.dart';
 import '../../core/storage.dart';
 import '../../data/models.dart';
 import '../../data/repository.dart';
@@ -65,17 +67,24 @@ class QuizSession {
     required this.questions,
     required this.startedAt,
     this.deadline,
+    this.hardDeadline,
     Map<int, String>? answers,
     Set<int>? locked,
     Map<int, int>? questionDeadlines,
     this.current = 0,
     this.finishedAt,
+    this.ownerId,
   }) : answers = answers ?? {},
        locked = locked ?? {},
        questionDeadlines = questionDeadlines ?? {};
 
   final String key;
   final QuizKind kind;
+
+  /// Qaysi o'quvchiniki (boshqa akkauntga natija yuborilmasligi uchun).
+  final int? ownerId;
+
+  bool get belongsToCurrentUser => ownerId == null || ownerId == Session.user?.id;
   final String title;
   final int? testId;
   final int? specialId;
@@ -86,6 +95,27 @@ class QuizSession {
 
   /// Umumiy vaqt tugash payti (timing.totalSeconds bo'lsa).
   final DateTime? deadline;
+
+  /// Qat'iy chegara — maxsus test faollik muddati tugashidan biroz oldin.
+  /// Shu paytgacha natija albatta yuboriladi (aks holda server qabul qilmaydi).
+  final DateTime? hardDeadline;
+
+  /// Ikkalasidan eng yaqini.
+  DateTime? get effectiveDeadline {
+    if (deadline == null) return hardDeadline;
+    if (hardDeadline == null) return deadline;
+    return deadline!.isBefore(hardDeadline!) ? deadline : hardDeadline;
+  }
+
+  /// Vaqt tugaganmi (umumiy yoki qat'iy chegara)?
+  bool get isExpired {
+    final d = effectiveDeadline;
+    return d != null && !AppClock.now().isBefore(d);
+  }
+
+  /// Faqat qat'iy chegara (maxsus test oxiri) sabab tugayaptimi.
+  bool get endsByHardDeadline =>
+      hardDeadline != null && (deadline == null || hardDeadline!.isBefore(deadline!));
 
   /// questionId -> asl harf.
   final Map<int, String> answers;
@@ -136,6 +166,7 @@ class QuizSession {
     int? testId,
     int? specialId,
     int passPercent = 60,
+    DateTime? activeUntil,
   }) {
     final rnd = Random();
     final questions = <QuizQuestion>[];
@@ -146,7 +177,7 @@ class QuizSession {
       questions.add(QuizQuestion(id: it.id, text: it.question, options: opts, correct: correct));
     }
     questions.shuffle(rnd);
-    final now = DateTime.now();
+    final now = AppClock.now();
     return QuizSession(
       key: key,
       kind: kind,
@@ -158,6 +189,9 @@ class QuizSession {
       questions: questions,
       startedAt: now,
       deadline: timing.hasTotal ? now.add(Duration(seconds: timing.totalSeconds!)) : null,
+      // Server faollik tugashini tekshiradi — 20 s zaxira bilan oldinroq yuboramiz.
+      hardDeadline: activeUntil?.subtract(const Duration(seconds: 20)),
+      ownerId: Session.user?.id,
     );
   }
 
@@ -171,7 +205,7 @@ class QuizSession {
     if (j == null) return null;
     try {
       final s = QuizSession.fromJson(j);
-      return s.questions.isEmpty ? null : s;
+      return s.questions.isEmpty || !s.belongsToCurrentUser ? null : s;
     } catch (_) {
       return null;
     }
@@ -188,11 +222,13 @@ class QuizSession {
     'questions': questions.map((q) => q.toJson()).toList(),
     'startedAt': startedAt.toIso8601String(),
     'deadline': deadline?.toIso8601String(),
+    'hardDeadline': hardDeadline?.toIso8601String(),
     'answers': answers.map((k, v) => MapEntry(k.toString(), v)),
     'locked': locked.toList(),
     'qd': questionDeadlines.map((k, v) => MapEntry(k.toString(), v)),
     'current': current,
     'finishedAt': finishedAt?.toIso8601String(),
+    'ownerId': ownerId,
   };
 
   factory QuizSession.fromJson(Map<String, dynamic> j) {
@@ -210,11 +246,13 @@ class QuizSession {
       questions: qs,
       startedAt: DateTime.tryParse(asStr(j['startedAt'])) ?? DateTime.now(),
       deadline: DateTime.tryParse(asStr(j['deadline'])),
+      hardDeadline: DateTime.tryParse(asStr(j['hardDeadline'])),
       answers: answersRaw.map((k, v) => MapEntry(int.tryParse(k) ?? -1, asStr(v))),
       locked: (j['locked'] is List ? (j['locked'] as List) : const []).map(asInt).whereType<int>().toSet(),
       questionDeadlines: qdRaw.map((k, v) => MapEntry(int.tryParse(k) ?? -1, asInt(v) ?? 0)),
       current: (asInt(j['current']) ?? 0).clamp(0, qs.isEmpty ? 0 : qs.length - 1),
       finishedAt: DateTime.tryParse(asStr(j['finishedAt'])),
+      ownerId: asInt(j['ownerId']),
     );
   }
 
@@ -227,8 +265,12 @@ class QuizSession {
 
   // ---------------- taymer ----------------
 
-  int? get totalRemaining =>
-      deadline?.difference(DateTime.now()).inSeconds;
+  /// Umumiy qolgan vaqt (soniya). Qat'iy chegara ham hisobga olinadi.
+  int? get totalRemaining {
+    final d = effectiveDeadline;
+    if (d == null) return null;
+    return (d.difference(AppClock.now()).inMilliseconds / 1000).ceil();
+  }
 
   /// Joriy savolga kirilganda chaqiriladi — savol taymerini boshlaydi.
   void enterCurrent() {
@@ -237,15 +279,30 @@ class QuizSession {
     if (isAnswered(q) || isLocked(q)) return;
     questionDeadlines.putIfAbsent(
       q.id,
-      () => DateTime.now().add(Duration(seconds: timing.perQuestionSeconds!)).millisecondsSinceEpoch,
+      () => AppClock.nowMs() + timing.perQuestionSeconds! * 1000,
     );
+  }
+
+  /// Vaqti o'tgan (javobsiz) savollarni yopadi. O'zgarish bo'lsa true.
+  bool lockExpiredQuestions() {
+    if (!timing.hasPerQuestion) return false;
+    final now = AppClock.nowMs();
+    var changed = false;
+    for (final q in questions) {
+      final d = questionDeadlines[q.id];
+      if (d != null && now >= d && !isAnswered(q) && !isLocked(q)) {
+        locked.add(q.id);
+        changed = true;
+      }
+    }
+    return changed;
   }
 
   int? questionRemaining(QuizQuestion q) {
     if (!timing.hasPerQuestion || isAnswered(q) || isLocked(q)) return null;
     final d = questionDeadlines[q.id];
     if (d == null) return timing.perQuestionSeconds;
-    return ((d - DateTime.now().millisecondsSinceEpoch) / 1000).ceil();
+    return ((d - AppClock.nowMs()) / 1000).ceil();
   }
 
   // ---------------- natija ----------------

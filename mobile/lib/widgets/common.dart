@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
@@ -9,6 +11,12 @@ import '../core/theme.dart';
 
 /// Future'ni yuklaydi va loading / xato (qayta urinish) / bo'sh / ma'lumot
 /// holatlarini bir xil ko'rsatadi. Pastga tortib yangilash ham bor.
+///
+/// Real vaqt:
+///  * [refreshInterval] berilsa — ekran ko'rinib turganda fonda jim yangilanadi;
+///  * ilova fondan qaytganda avtomatik yangilanadi;
+///  * internet yo'qligidan yuklanmagan bo'lsa — o'zi qayta urinadi.
+/// Fondagi yangilanish xatosi foydalanuvchini bezovta qilmaydi (eski ma'lumot qoladi).
 class AsyncView<T> extends StatefulWidget {
   const AsyncView({
     super.key,
@@ -18,6 +26,8 @@ class AsyncView<T> extends StatefulWidget {
     this.emptyTitle = "Ma'lumot yo'q",
     this.emptySubtitle,
     this.emptyIcon = Iconsax.box,
+    this.refreshInterval,
+    this.refreshOnResume = true,
   });
 
   final Future<T> Function() load;
@@ -26,26 +36,65 @@ class AsyncView<T> extends StatefulWidget {
   final String emptyTitle;
   final String? emptySubtitle;
   final IconData emptyIcon;
+  final Duration? refreshInterval;
+  final bool refreshOnResume;
 
   @override
   State<AsyncView<T>> createState() => AsyncViewState<T>();
 }
 
-class AsyncViewState<T> extends State<AsyncView<T>> {
+class AsyncViewState<T> extends State<AsyncView<T>> with WidgetsBindingObserver {
   T? _data;
   Object? _error;
   bool _loading = true;
+  bool _busy = false;
   int _req = 0;
+  Timer? _timer;
+  Timer? _retry;
+  DateTime _lastLoad = DateTime.fromMillisecondsSinceEpoch(0);
+  bool _foreground = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     refresh();
+    final every = widget.refreshInterval;
+    if (every != null) {
+      _timer = Timer.periodic(every, (_) {
+        if (_foreground && _visible) _load(silent: true);
+      });
+    }
   }
 
-  Future<void> refresh() async {
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _timer?.cancel();
+    _retry?.cancel();
+    super.dispose();
+  }
+
+  bool get _visible => mounted && (ModalRoute.of(context)?.isCurrent ?? true);
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _foreground = state == AppLifecycleState.resumed;
+    if (_foreground && widget.refreshOnResume && _visible &&
+        DateTime.now().difference(_lastLoad) > const Duration(seconds: 10)) {
+      _load(silent: true);
+    }
+  }
+
+  /// Foydalanuvchi so'ragan yangilash (pull-to-refresh, "Qayta urinish").
+  Future<void> refresh() => _load(silent: false);
+
+  Future<void> _load({required bool silent}) async {
+    if (_busy && silent) return;
+    _busy = true;
+    _retry?.cancel();
     final id = ++_req;
-    if (mounted) {
+    if (mounted && !silent) {
       setState(() {
         _loading = _data == null;
         _error = null;
@@ -54,8 +103,10 @@ class AsyncViewState<T> extends State<AsyncView<T>> {
     try {
       final d = await widget.load();
       if (!mounted || id != _req) return;
+      _lastLoad = DateTime.now();
       setState(() {
         _data = d;
+        _error = null;
         _loading = false;
       });
     } catch (e) {
@@ -64,11 +115,19 @@ class AsyncViewState<T> extends State<AsyncView<T>> {
         _error = e;
         _loading = false;
       });
-      if (_data != null) {
+      if (_data != null && !silent) {
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
           SnackBar(content: Text(errorText(e)), backgroundColor: AppColors.red),
         );
       }
+      // Internet yo'q / server javob bermadi — biroz kutib o'zi qayta urinadi.
+      if (e is ApiException && e.isNetwork) {
+        _retry = Timer(const Duration(seconds: 8), () {
+          if (_foreground && _visible) _load(silent: true);
+        });
+      }
+    } finally {
+      if (id == _req) _busy = false;
     }
   }
 

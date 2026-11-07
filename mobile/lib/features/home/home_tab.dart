@@ -11,6 +11,7 @@ import '../../widgets/common.dart';
 import '../books/subject_books_screen.dart';
 import '../quiz/quiz_launcher.dart';
 import '../quiz/quiz_session.dart';
+import '../quiz/quiz_sync.dart';
 import '../rate/rate_screen.dart';
 import '../special/special_tests_screen.dart';
 
@@ -21,31 +22,55 @@ class HomeTab extends StatefulWidget {
   State<HomeTab> createState() => HomeTabState();
 }
 
-class HomeTabState extends State<HomeTab> {
+class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   final _search = TextEditingController();
   final _view = GlobalKey<AsyncViewState<List<Subject>>>();
   QuizSession? _unfinished;
   int _activeSpecial = 0;
   Timer? _ticker;
+  Timer? _specialTimer;
+  StreamSubscription<void>? _syncSub;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     reloadBanner();
     _loadSpecialCount();
+    // Banner taymeri — real vaqtda; vaqt tugasa natija fonda yuboriladi.
     _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted && _unfinished?.deadline != null) setState(() {});
+      final u = _unfinished;
+      if (!mounted || u == null) return;
+      if (!u.isFinished && u.isExpired) {
+        QuizSync.run();
+      }
+      if (u.effectiveDeadline != null) setState(() {});
     });
+    // Maxsus testlar soni — har daqiqada (yangi test ochilsa nishoncha chiqadi).
+    _specialTimer = Timer.periodic(const Duration(seconds: 60), (_) => _loadSpecialCount());
+    _syncSub = QuizSync.changes.listen((_) => reloadBanner());
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _ticker?.cancel();
+    _specialTimer?.cancel();
+    _syncSub?.cancel();
     _search.dispose();
     super.dispose();
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      reloadBanner();
+      _loadSpecialCount();
+    }
+  }
+
   void reloadBanner() {
+    if (!mounted) return;
     setState(() => _unfinished = QuizLauncher.unfinished());
   }
 
@@ -170,10 +195,10 @@ class HomeTabState extends State<HomeTab> {
 
   Widget _banner(QuizSession s) {
     final rem = s.totalRemaining;
-    final subtitle = s.isFinished
-        ? 'Natija yuborilmagan — yuboring'
+    final subtitle = (s.isFinished || s.isExpired)
+        ? 'Natija yuborilmoqda...'
         : rem != null
-            ? 'Qolgan vaqt: ${formatDuration(rem)}'
+            ? '${s.title} · ${formatDuration(rem)}'
             : '${s.title} · ${s.answeredCount}/${s.total} javob';
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),

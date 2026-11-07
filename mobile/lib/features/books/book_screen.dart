@@ -54,6 +54,7 @@ class _BookScreenState extends State<BookScreen> {
       body: AsyncView<List<SectionDetail>>(
         key: _view,
         load: _load,
+        refreshInterval: const Duration(seconds: 60),
         isEmpty: (l) => l.isEmpty,
         emptyTitle: "Bu kitobda bo'limlar yo'q",
         emptyIcon: Iconsax.note_1,
