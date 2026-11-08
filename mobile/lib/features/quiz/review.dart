@@ -150,14 +150,14 @@ class _ReviewScreenState extends State<ReviewScreen> {
           children: [
             Row(
               children: [
-                Text('$n-savol', style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
+                Text('$n-savol', style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
                 const Spacer(),
                 if (it.isEmpty)
-                  const Pill(text: 'Javobsiz', color: AppColors.orange, background: AppColors.orangeSoft)
+                  Pill(text: 'Javobsiz', color: AppColors.orange, background: AppColors.orangeSoft)
                 else if (it.isCorrect)
-                  const Pill(text: "To'g'ri", color: AppColors.primaryDark, background: AppColors.primarySoft)
+                  Pill(text: "To'g'ri", color: AppColors.primaryDark, background: AppColors.primarySoft)
                 else
-                  const Pill(text: 'Xato', color: AppColors.red, background: AppColors.redSoft),
+                  Pill(text: 'Xato', color: AppColors.red, background: AppColors.redSoft),
               ],
             ),
             const SizedBox(height: 8),
@@ -191,7 +191,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 ? const Icon(Iconsax.tick_circle, size: 16, color: Colors.white)
                 : mineWrong
                     ? const Icon(Iconsax.close_circle, size: 16, color: Colors.white)
-                    : Text(letter, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textMuted, fontSize: 12)),
+                    : Text(letter, style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.textMuted, fontSize: 12)),
           ),
           const SizedBox(width: 10),
           Expanded(

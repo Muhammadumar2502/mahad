@@ -42,7 +42,7 @@ class BookCard extends StatelessWidget {
                     ),
                   ),
                   if (locked)
-                    const Positioned.fill(child: Center(child: Icon(Iconsax.lock_1, color: AppColors.textMuted, size: 34))),
+                    Positioned.fill(child: Center(child: Icon(Iconsax.lock_1, color: AppColors.textMuted, size: 34))),
                 ],
               ),
               const SizedBox(height: 10),
@@ -56,7 +56,7 @@ class BookCard extends StatelessWidget {
               const SizedBox(height: 2),
               Text(
                 locked ? 'Yopiq' : "${book.sections.length} ta bo'lim",
-                style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+                style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
               ),
             ],
           ),
@@ -111,7 +111,7 @@ void openBook(BuildContext context, Book book, Widget Function() page) {
       context: context,
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        icon: const Icon(Iconsax.lock_1, color: AppColors.textMuted, size: 36),
+        icon: Icon(Iconsax.lock_1, color: AppColors.textMuted, size: 36),
         title: const Text('Kitob yopiq'),
         content: const Text("Bu kitob hozircha admin tomonidan yopilgan. Ochilganda testlarni ishlay olasiz."),
         actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tushunarli'))],

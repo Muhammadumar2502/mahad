@@ -1,93 +1,33 @@
+// Theme entry point. The real theme lives in core/theme/ (G · Klassik Islomiy, Kun + Tun).
+// `AppColors` keeps its old names so existing screens compile; every constant now resolves to the
+// active MahadColors token (Kun or Tun). Screens migrate to `context.mc` during the redesign.
 import 'package:flutter/material.dart';
+
+import 'theme/mahad_colors.dart';
+import 'theme/theme_controller.dart';
+
+export 'theme/app_theme.dart';
+export 'theme/mahad_colors.dart';
+export 'theme/theme_controller.dart';
 
 class AppColors {
   AppColors._();
 
-  static const primary = Color(0xFF53B175);
-  static const primaryDark = Color(0xFF3E9A5F);
-  static const primarySoft = Color(0xFFEAF8E5);
-  static const background = Color(0xFFF6F7F9);
-  static const surface = Colors.white;
-  static const text = Color(0xFF181725);
-  static const textMuted = Color(0xFF7C7C7C);
-  static const border = Color(0xFFE6E8EC);
-  static const red = Color(0xFFFF647C);
-  static const redSoft = Color(0xFFFFECEF);
-  static const orange = Color(0xFFFF9800);
-  static const orangeSoft = Color(0xFFFFF0E5);
-  static const blue = Color(0xFF6979F8);
-  static const blueSoft = Color(0xFFEEF0FF);
-  static const gold = Color(0xFFFFC107);
-}
+  static MahadColors get _c => ThemeController.instance.isDark ? MahadColors.tun : MahadColors.kun;
 
-class AppTheme {
-  AppTheme._();
-
-  static ThemeData get light {
-    final base = ThemeData(
-      useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.primary,
-        primary: AppColors.primary,
-        surface: AppColors.surface,
-        error: AppColors.red,
-      ),
-      scaffoldBackgroundColor: AppColors.background,
-    );
-    return base.copyWith(
-      appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.surface,
-        surfaceTintColor: Colors.transparent,
-        foregroundColor: AppColors.text,
-        elevation: 0,
-        centerTitle: true,
-        titleTextStyle: TextStyle(
-          color: AppColors.text,
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
-          disabledBackgroundColor: AppColors.border,
-          disabledForegroundColor: AppColors.textMuted,
-          elevation: 0,
-          minimumSize: const Size.fromHeight(52),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.text,
-          minimumSize: const Size.fromHeight(52),
-          side: const BorderSide(color: AppColors.border),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: const Color(0xFFF0F1F3),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        hintStyle: const TextStyle(color: AppColors.textMuted),
-      ),
-      snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating),
-      cardTheme: CardThemeData(
-        color: AppColors.surface,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.border),
-        ),
-      ),
-    );
-  }
+  static Color get primary => _c.icon;
+  static Color get primaryDark => _c.okText;
+  static Color get primarySoft => _c.okSoft;
+  static Color get background => _c.pageFlat;
+  static Color get surface => _c.card;
+  static Color get text => _c.ink;
+  static Color get textMuted => _c.muted;
+  static Color get border => _c.frame;
+  static Color get red => _c.bad;
+  static Color get redSoft => _c.badSoft;
+  static Color get orange => _c.warn;
+  static Color get orangeSoft => _c.warnSoft;
+  static Color get blue => _c.info;
+  static Color get blueSoft => _c.infoSoft;
+  static Color get gold => _c.gold;
 }

@@ -142,7 +142,7 @@ class _ResultsScreenState extends State<ResultsScreen> {
         children: [
           Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: c)),
           const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+          Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
         ],
       ),
     );
@@ -241,20 +241,20 @@ class _ResultTile extends StatelessWidget {
                     Row(
                       children: [
                         if (r.subtitle != null && r.kind == ResultKind.book) ...[
-                          const Icon(Iconsax.book, size: 14, color: AppColors.textMuted),
+                          Icon(Iconsax.book, size: 14, color: AppColors.textMuted),
                           const SizedBox(width: 3),
                           Flexible(
-                            child: Text(r.subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                            child: Text(r.subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
                           ),
                         ] else ...[
-                          const Icon(Iconsax.message_question, size: 14, color: AppColors.textMuted),
+                          Icon(Iconsax.message_question, size: 14, color: AppColors.textMuted),
                           const SizedBox(width: 3),
-                          Text('${r.total} savol', style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                          Text('${r.total} savol', style: TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
                         ],
                         const SizedBox(width: 10),
-                        const Icon(Iconsax.calendar_1, size: 13, color: AppColors.textMuted),
+                        Icon(Iconsax.calendar_1, size: 13, color: AppColors.textMuted),
                         const SizedBox(width: 3),
-                        Text(_short(r.date), style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                        Text(_short(r.date), style: TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
                       ],
                     ),
                   ],
@@ -268,7 +268,7 @@ class _ResultTile extends StatelessWidget {
                     decoration: BoxDecoration(color: scoreColor, borderRadius: BorderRadius.circular(8)),
                     child: Text('${r.solved}/${r.total}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
                   ),
-                  const Icon(Iconsax.arrow_right_3, color: AppColors.primary),
+                  Icon(Iconsax.arrow_right_3, color: AppColors.primary),
                 ],
               ),
             ],

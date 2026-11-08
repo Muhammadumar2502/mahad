@@ -121,7 +121,7 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                         decoration: InputDecoration(
                           hintText: 'Fan qidirish',
                           fillColor: AppColors.surface,
-                          prefixIcon: const Icon(Iconsax.search_normal_1, color: AppColors.primary),
+                          prefixIcon: Icon(Iconsax.search_normal_1, color: AppColors.primary),
                           suffixIcon: _search.text.isEmpty
                               ? null
                               : IconButton(

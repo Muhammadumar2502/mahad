@@ -44,7 +44,7 @@ class _BooksTabState extends State<BooksTab> {
               child: TextField(
                 controller: _search,
                 onChanged: (_) => setState(() {}),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   hintText: 'Kitob qidirish',
                   fillColor: AppColors.surface,
                   prefixIcon: Icon(Iconsax.search_normal_1, color: AppColors.primary),

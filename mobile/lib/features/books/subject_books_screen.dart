@@ -37,7 +37,7 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
         actions: [
           IconButton(
             tooltip: 'Aralash test',
-            icon: const Icon(Iconsax.shuffle, color: AppColors.primary),
+            icon: Icon(Iconsax.shuffle, color: AppColors.primary),
             onPressed: () {
               final open = _books.where((b) => !b.fullBlock && b.sections.isNotEmpty).toList();
               if (open.isEmpty) {
@@ -144,7 +144,7 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
@@ -204,7 +204,7 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
                         title: Text(s.name),
                         secondary: _sectionCounts[s.id] == null
                             ? null
-                            : Text('${_sectionCounts[s.id]} ta', style: const TextStyle(color: AppColors.textMuted)),
+                            : Text('${_sectionCounts[s.id]} ta', style: TextStyle(color: AppColors.textMuted)),
                         onChanged: (v) => setState(() => v == true ? _selected.add(s.id) : _selected.remove(s.id)),
                       ),
                 ],
@@ -236,7 +236,7 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
                           children: [
                             Text(
                               _selected.isEmpty || _sectionCounts.isEmpty ? 'Test soni' : 'Test soni (mavjud: $_available)',
-                              style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                              style: TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
                             ),
                             const SizedBox(height: 6),
                             TextField(
@@ -244,7 +244,7 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
                               keyboardType: TextInputType.number,
                               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
                               onChanged: (_) => setState(() {}),
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary),
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary),
                               decoration: const InputDecoration(
                                 isDense: true,
                                 fillColor: Color(0xFFF4FAF6),

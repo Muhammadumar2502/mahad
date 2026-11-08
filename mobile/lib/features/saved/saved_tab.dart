@@ -43,7 +43,7 @@ class SavedTabState extends State<SavedTab> {
             alignment: Alignment.centerRight,
             padding: const EdgeInsets.only(right: 20),
             decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(16)),
-            child: const Icon(Iconsax.trash, color: AppColors.red),
+            child: Icon(Iconsax.trash, color: AppColors.red),
           ),
           onDismissed: (_) async {
             final s = Storage.saved..remove('$id');
@@ -72,7 +72,7 @@ class SavedTabState extends State<SavedTab> {
                       width: 48,
                       height: 48,
                       decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(12)),
-                      child: const Icon(Iconsax.heart_copy, color: AppColors.red),
+                      child: Icon(Iconsax.heart_copy, color: AppColors.red),
                     ),
                     const SizedBox(width: 14),
                     Expanded(
@@ -83,12 +83,12 @@ class SavedTabState extends State<SavedTab> {
                           const SizedBox(height: 3),
                           Text(
                             [if (asStr(it['book']).isNotEmpty) asStr(it['book']), '${asInt(it['count']) ?? 0} ta test'].join(' · '),
-                            style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                            style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(Iconsax.arrow_right_3, color: AppColors.textMuted),
+                    Icon(Iconsax.arrow_right_3, color: AppColors.textMuted),
                   ],
                 ),
               ),

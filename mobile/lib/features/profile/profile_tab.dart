@@ -79,7 +79,7 @@ class _ProfileTabState extends State<ProfileTab> {
                   backgroundColor: Colors.white,
                   child: Text(
                     (u?.name.isNotEmpty ?? false) ? u!.name.characters.first.toUpperCase() : '?',
-                    style: const TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary),
+                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary),
                   ),
                 ),
                 const SizedBox(width: 16),
@@ -114,7 +114,7 @@ class _ProfileTabState extends State<ProfileTab> {
             _row(Iconsax.info_circle, 'Ilova versiyasi', '${DeviceData.appVersion} (${DeviceData.buildNumber})'),
           ]),
           const SizedBox(height: 8),
-          const Padding(
+          Padding(
             padding: EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               "Akkaunt faqat shu qurilmada ishlaydi. Boshqa telefonga o'tish uchun admin qurilmani o'chirib berishi kerak.",
@@ -123,7 +123,7 @@ class _ProfileTabState extends State<ProfileTab> {
           ),
           const SizedBox(height: 20),
           OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: const BorderSide(color: AppColors.redSoft, width: 1.5)),
+            style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: BorderSide(color: AppColors.redSoft, width: 1.5)),
             onPressed: _logout,
             icon: const Icon(Iconsax.logout),
             label: const Text('Chiqish'),
@@ -150,7 +150,7 @@ class _ProfileTabState extends State<ProfileTab> {
 
   Widget _row(IconData icon, String label, String value) => ListTile(
     leading: Icon(icon, color: AppColors.primary),
-    title: Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 14)),
+    title: Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
     trailing: ConstrainedBox(
       constraints: const BoxConstraints(maxWidth: 190),
       child: Text(value, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),

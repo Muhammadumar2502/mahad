@@ -25,6 +25,7 @@ dependencies:
   mask_text_input_formatter: ^2.9.0
   cupertino_icons: ^1.0.8
   iconsax_flutter: ^1.0.1
+  google_fonts: ^9.0.0
 
 dev_dependencies:
   flutter_test:
@@ -40,6 +41,9 @@ flutter:
     - .env
     - assets/images/
     - assets/icons/
+    - assets/logo/
+    - assets/patterns/
+    - assets/google_fonts/
 
 flutter_icons:
   android: true

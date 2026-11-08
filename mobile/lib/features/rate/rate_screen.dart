@@ -103,7 +103,7 @@ class RateScreen extends StatelessWidget {
                 shape: BoxShape.circle,
                 border: Border.all(color: const Color(0xFFCBE8D4), width: 2),
               ),
-              child: Text('$rank', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
+              child: Text('$rank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
             ),
           const SizedBox(width: 16),
           Expanded(

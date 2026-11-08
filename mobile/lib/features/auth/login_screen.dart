@@ -94,7 +94,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 const SizedBox(height: 24),
                 const Text('Xush kelibsiz!', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
                 const SizedBox(height: 6),
-                const Text(
+                Text(
                   'Telefon raqam va parolingiz bilan kiring',
                   textAlign: TextAlign.center,
                   style: TextStyle(color: AppColors.textMuted),
@@ -142,9 +142,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(12)),
                     child: Row(
                       children: [
-                        const Icon(Iconsax.danger, color: AppColors.red),
+                        Icon(Iconsax.danger, color: AppColors.red),
                         const SizedBox(width: 10),
-                        Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.red))),
+                        Expanded(child: Text(_error!, style: TextStyle(color: AppColors.red))),
                       ],
                     ),
                   ),
@@ -163,7 +163,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9), fontSize: 12.5),
                 ),
                 const SizedBox(height: 8),
-                Text('v${DeviceData.appVersion}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
+                Text('v${DeviceData.appVersion}', textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMuted, fontSize: 12)),
               ],
             ),
           ),

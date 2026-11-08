@@ -370,8 +370,8 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
                 Container(
                   width: 72,
                   height: 72,
-                  decoration: const BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-                  child: const Icon(Iconsax.wifi_square, color: AppColors.orange, size: 34),
+                  decoration: BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
+                  child: Icon(Iconsax.wifi_square, color: AppColors.orange, size: 34),
                 ),
                 const SizedBox(height: 16),
                 Text(_submitError ?? '', textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
@@ -379,7 +379,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
                 Text(
                   'Javoblaringiz saqlangan. $_retryIn s dan so\'ng avtomatik qayta yuboriladi.',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(color: AppColors.textMuted),
+                  style: TextStyle(color: AppColors.textMuted),
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton.icon(onPressed: _send, icon: const Icon(Iconsax.refresh), label: const Text('Hozir yuborish')),
@@ -461,11 +461,11 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
                 children: [
                   Text(
                     'Savol ${s.current + 1} / ${s.total}',
-                    style: const TextStyle(color: AppColors.blue, fontWeight: FontWeight.w700),
+                    style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.w700),
                   ),
                   const Spacer(),
                   if (forced)
-                    const Pill(text: "Majburiy o'tish", color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.arrow_right_1),
+                    Pill(text: "Majburiy o'tish", color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.arrow_right_1),
                 ],
               ),
               const SizedBox(height: 10),
@@ -473,7 +473,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
               const SizedBox(height: 18),
               for (var i = 0; i < q.options.length; i++) _optionTile(q, i),
               if (locked && !answered)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.only(top: 8),
                   child: Pill(text: 'Vaqt tugadi — javob berilmadi', color: AppColors.red, background: AppColors.redSoft, icon: Iconsax.timer_pause),
                 ),

@@ -213,7 +213,7 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
                         Text(t.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
                         if ((t.description ?? '').isNotEmpty) ...[
                           const SizedBox(height: 2),
-                          Text(t.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textMuted)),
+                          Text(t.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textMuted)),
                         ],
                       ],
                     ),
@@ -229,7 +229,7 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
                   Pill(text: _timeLabel(t), color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.clock),
                   _statusPill(st),
                   if (pending && active)
-                    const Pill(text: 'Davom ettirish', color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.play),
+                    Pill(text: 'Davom ettirish', color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.play),
                 ],
               ),
               if (t.start != null || t.end != null) ...[
@@ -275,9 +275,9 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
   }
 
   Widget _statusPill(SpecialStatus st) => switch (st) {
-    SpecialStatus.active => const Pill(text: 'Faol', color: AppColors.primaryDark, background: AppColors.primarySoft, icon: Iconsax.tick_circle_copy),
-    SpecialStatus.upcoming => const Pill(text: 'Boshlanmagan', color: AppColors.blue, background: AppColors.blueSoft, icon: Iconsax.timer_start),
-    SpecialStatus.expired => const Pill(text: 'Faol emas', color: AppColors.textMuted, background: Color(0xFFF0F1F3), icon: Iconsax.timer_pause),
+    SpecialStatus.active => Pill(text: 'Faol', color: AppColors.primaryDark, background: AppColors.primarySoft, icon: Iconsax.tick_circle_copy),
+    SpecialStatus.upcoming => Pill(text: 'Boshlanmagan', color: AppColors.blue, background: AppColors.blueSoft, icon: Iconsax.timer_start),
+    SpecialStatus.expired => Pill(text: 'Faol emas', color: AppColors.textMuted, background: Color(0xFFF0F1F3), icon: Iconsax.timer_pause),
     SpecialStatus.done => const Pill(text: 'Yechilgan', color: Color(0xFF9C27B0), background: Color(0xFFF6E8F9), icon: Iconsax.task_square),
   };
 }

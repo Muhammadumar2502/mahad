@@ -100,7 +100,7 @@ class QuizResultScreen extends StatelessWidget {
             children: [
               Text(value, style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800, color: color)),
               const SizedBox(height: 4),
-              Text(label, style: const TextStyle(color: AppColors.textMuted)),
+              Text(label, style: TextStyle(color: AppColors.textMuted)),
             ],
           ),
         ),

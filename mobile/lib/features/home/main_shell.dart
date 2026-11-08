@@ -69,7 +69,7 @@ class _MainShellState extends State<MainShell> {
             if (i == 2) _savedKey.currentState?.reload();
             if (i == 0) _homeKey.currentState?.reloadBanner();
           },
-          destinations: const [
+          destinations: [
             NavigationDestination(
               icon: Icon(Iconsax.home_2),
               selectedIcon: Icon(Iconsax.home_2_copy, color: AppColors.primary),

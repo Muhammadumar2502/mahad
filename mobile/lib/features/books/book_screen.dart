@@ -84,12 +84,12 @@ class _BookScreenState extends State<BookScreen> {
       decoration: BoxDecoration(color: AppColors.blueSoft, borderRadius: BorderRadius.circular(14)),
       child: Row(
         children: [
-          const Icon(Iconsax.info_circle, color: AppColors.blue),
+          Icon(Iconsax.info_circle, color: AppColors.blue),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               "Bo'limlar ketma-ket ochiladi: keyingisiga o'tish uchun kamida ${b.passingPercentage}% natija kerak.",
-              style: const TextStyle(color: AppColors.blue, fontSize: 13),
+              style: TextStyle(color: AppColors.blue, fontSize: 13),
             ),
           ),
         ],
@@ -126,7 +126,7 @@ class _BookScreenState extends State<BookScreen> {
               context: context,
               builder: (ctx) => AlertDialog(
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                icon: const Icon(Iconsax.lock_1, size: 34, color: AppColors.textMuted),
+                icon: Icon(Iconsax.lock_1, size: 34, color: AppColors.textMuted),
                 title: Text(s.name),
                 content: Text(lock.reason),
                 actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tushunarli'))],
@@ -163,7 +163,7 @@ class _BookScreenState extends State<BookScreen> {
                     const SizedBox(height: 3),
                     Text(
                       s.hasTest ? '${s.questionCount} ta test${tried ? ' · ${s.attempts.length} urinish' : ''}' : "Test qo'shilmagan",
-                      style: const TextStyle(color: AppColors.textMuted, fontSize: 13),
+                      style: TextStyle(color: AppColors.textMuted, fontSize: 13),
                     ),
                   ],
                 ),

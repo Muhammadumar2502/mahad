@@ -51,7 +51,7 @@ class UpdateScreen extends StatelessWidget {
                       Text(
                         message ?? 'Ilovaning yangi versiyasi mavjud. Davom etish uchun yangilang.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 15, height: 1.4),
+                        style: TextStyle(color: AppColors.textMuted, fontSize: 15, height: 1.4),
                       ),
                       const SizedBox(height: 20),
                       Container(
@@ -64,7 +64,7 @@ class UpdateScreen extends StatelessWidget {
                         child: Row(
                           children: [
                             Expanded(child: _ver('Joriy versiya', DeviceData.appVersion, AppColors.text)),
-                            const Icon(Iconsax.arrow_right_1, color: AppColors.primary),
+                            Icon(Iconsax.arrow_right_1, color: AppColors.primary),
                             Expanded(child: _ver('Yangi versiya', requiredVersion ?? '—', AppColors.primary)),
                           ],
                         ),
@@ -96,7 +96,7 @@ class UpdateScreen extends StatelessWidget {
 
   Widget _ver(String label, String value, Color color) => Column(
     children: [
-      Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
+      Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 13)),
       const SizedBox(height: 4),
       Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
     ],

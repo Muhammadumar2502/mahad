@@ -178,13 +178,13 @@ class LoadingView extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(
+          SizedBox(
             width: 36,
             height: 36,
             child: CircularProgressIndicator(strokeWidth: 3.5, color: AppColors.primary),
           ),
           const SizedBox(height: 16),
-          Text(text, style: const TextStyle(color: AppColors.textMuted)),
+          Text(text, style: TextStyle(color: AppColors.textMuted)),
         ],
       ),
     );
@@ -208,14 +208,14 @@ class ErrorView extends StatelessWidget {
             Container(
               width: 72,
               height: 72,
-              decoration: const BoxDecoration(color: AppColors.redSoft, shape: BoxShape.circle),
-              child: const Icon(Iconsax.wifi_square, color: AppColors.red, size: 34),
+              decoration: BoxDecoration(color: AppColors.redSoft, shape: BoxShape.circle),
+              child: Icon(Iconsax.wifi_square, color: AppColors.red, size: 34),
             ),
             const SizedBox(height: 16),
             Text(
               message,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 15, color: AppColors.text),
+              style: TextStyle(fontSize: 15, color: AppColors.text),
             ),
             if (onRetry != null) ...[
               const SizedBox(height: 20),
@@ -253,14 +253,14 @@ class EmptyView extends StatelessWidget {
             Container(
               width: 76,
               height: 76,
-              decoration: const BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
+              decoration: BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
               child: Icon(icon, color: AppColors.primary, size: 36),
             ),
             const SizedBox(height: 16),
             Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
             if (subtitle != null) ...[
               const SizedBox(height: 6),
-              Text(subtitle!, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textMuted)),
+              Text(subtitle!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMuted)),
             ],
           ],
         ),
@@ -416,7 +416,7 @@ Future<T> withLoading<T>(BuildContext context, Future<T> Function() task) async 
     context: context,
     barrierDismissible: false,
     useRootNavigator: true,
-    builder: (_) => const PopScope(
+    builder: (_) => PopScope(
       canPop: false,
       child: Center(
         child: Card(

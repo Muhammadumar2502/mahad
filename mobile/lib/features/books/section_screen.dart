@@ -91,7 +91,7 @@ class _SectionScreenState extends State<SectionScreen> {
                 Container(
                   height: 170,
                   margin: const EdgeInsets.only(bottom: 4),
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     color: AppColors.surface,
                     borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
                   ),
@@ -100,7 +100,7 @@ class _SectionScreenState extends State<SectionScreen> {
                     width: 104,
                     height: 104,
                     decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(22)),
-                    child: const Icon(Iconsax.book_1, color: AppColors.primary, size: 56),
+                    child: Icon(Iconsax.book_1, color: AppColors.primary, size: 56),
                   ),
                 ),
                 Padding(
@@ -115,7 +115,7 @@ class _SectionScreenState extends State<SectionScreen> {
                             const SizedBox(height: 2),
                             Text(
                               'Jami: ${s.questionCount} ta${s.bookName != null ? '  ·  ${s.bookName}' : ''}',
-                              style: const TextStyle(color: AppColors.textMuted),
+                              style: TextStyle(color: AppColors.textMuted),
                             ),
                           ],
                         ),
@@ -139,9 +139,9 @@ class _SectionScreenState extends State<SectionScreen> {
                       decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(14)),
                       child: Row(
                         children: [
-                          const Icon(Iconsax.lock_1, color: AppColors.red),
+                          Icon(Iconsax.lock_1, color: AppColors.red),
                           const SizedBox(width: 10),
-                          Expanded(child: Text(s.blockReason, style: const TextStyle(color: AppColors.red))),
+                          Expanded(child: Text(s.blockReason, style: TextStyle(color: AppColors.red))),
                         ],
                       ),
                     ),
@@ -254,7 +254,7 @@ class _SectionScreenState extends State<SectionScreen> {
                 child: Text(trailing, style: TextStyle(fontWeight: FontWeight.w700, color: color)),
               ),
               const SizedBox(width: 4),
-              const Icon(Iconsax.arrow_right_3, color: AppColors.primary),
+              Icon(Iconsax.arrow_right_3, color: AppColors.primary),
             ],
           ),
         ),
