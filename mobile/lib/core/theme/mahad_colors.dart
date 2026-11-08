@@ -461,7 +461,7 @@ class MahadColors extends ThemeExtension<MahadColors> {
     dangBg: Color(0x14FB7185),
     dangBd: Color(0x8CFB7185),
     dangText: Color(0xFFFDA4AF),
-    dangFill: Color(0xFFE11D48),
+    dangFill: Color(0xFFBE123C),
     dangOn: Color(0xFFFFF1F3),
     ok: Color(0xFF34D399),
     okText: Color(0xFF6EE7B7),
