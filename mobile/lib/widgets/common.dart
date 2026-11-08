@@ -326,6 +326,46 @@ class ArchPlate extends StatelessWidget {
   }
 }
 
+/// Filter chip: selected = primary fill, unselected = card + frame. [small] = 32px period chips.
+class MahadChip extends StatelessWidget {
+  const MahadChip({super.key, required this.label, required this.selected, required this.onTap, this.small = false});
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mc;
+    return Padding(
+      padding: const EdgeInsets.only(right: 8, top: 5, bottom: 5),
+      child: PressScale(
+        child: GestureDetector(
+          onTap: onTap,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 220),
+            curve: Curves.easeOutCubic,
+            height: small ? 32 : 36,
+            padding: EdgeInsets.symmetric(horizontal: small ? 12 : 15),
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              gradient: selected ? LinearGradient(colors: [c.primaryStart, c.primaryEnd]) : null,
+              color: selected ? null : c.card,
+              borderRadius: BorderRadius.circular(999),
+              border: Border.all(color: selected ? c.gold.withValues(alpha: 0.55) : c.frame),
+            ),
+            child: Text(
+              label,
+              style: AppTheme.body(small ? 12.5 : 13.5, selected ? FontWeight.w600 : FontWeight.w500, 18, selected ? c.priText : c.ink),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Dashed hairline separator between rows inside one DoubleFrame.
 class DashedLine extends StatelessWidget {
   const DashedLine({super.key, this.indent = 0});
@@ -486,9 +526,9 @@ class PercentBadge extends StatelessWidget {
       (PercentTone.bad, true) => (c.badSolidOn, c.badSolid),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: solid ? 12 : 9, vertical: solid ? 6 : 4),
       decoration: ShapeDecoration(color: bg, shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(6))),
-      child: Text(text, style: AppTheme.body(12.5, FontWeight.w700, 16, fg)),
+      child: Text(text, style: AppTheme.body(solid ? 14 : 12.5, FontWeight.w700, solid ? 18 : 16, fg).copyWith(letterSpacing: 0.4)),
     );
   }
 }

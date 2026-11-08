@@ -92,21 +92,13 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
   }
 
   void _info(String title, String msg) {
-    showDialog<void>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Text(title),
-        content: Text(msg),
-        actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Yopish'))],
-      ),
-    );
+    infoDialog(context, title: title, message: msg, button: 'Yopish');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Maxsus testlar')),
+    return BandPage(
+      title: 'Maxsus testlar',
       body: AsyncView<List<SpecialTest>>(
         key: _view,
         load: _load,
@@ -119,34 +111,21 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
           final now = ApiClient.instance.serverNow;
           int count(SpecialStatus st) => all.where((t) => t.statusAt(now) == st).length;
           final list = _filter == null ? all : all.where((t) => t.statusAt(now) == _filter).toList();
-          Widget chip(String label, SpecialStatus? v) {
-            final sel = _filter == v;
-            return Padding(
-              padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-              child: ChoiceChip(
-                label: Text(label),
-                selected: sel,
-                showCheckmark: false,
-                selectedColor: AppColors.primarySoft,
-                labelStyle: TextStyle(color: sel ? AppColors.primaryDark : AppColors.text, fontWeight: sel ? FontWeight.w600 : FontWeight.w400),
-                side: BorderSide(color: sel ? AppColors.primary : AppColors.border),
-                onSelected: (_) => setState(() => _filter = v),
-              ),
-            );
-          }
+          Widget chip(String label, SpecialStatus? v) =>
+              MahadChip(label: label, selected: _filter == v, onTap: () => setState(() => _filter = v));
 
           return RefreshIndicator(
-            color: AppColors.primary,
+            color: context.mc.spinner,
             onRefresh: refresh,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 52,
+                    height: 56,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
                       children: [
                         chip('Hammasi (${all.length})', null),
                         chip('Faol (${count(SpecialStatus.active)})', SpecialStatus.active),
@@ -164,11 +143,11 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
                   )
                 else
                   SliverPadding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
                     sliver: SliverList.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 14),
-                      itemBuilder: (_, i) => _card(list[i]),
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) => FadeSlideIn(index: i, child: _card(list[i])),
                     ),
                   ),
               ],
@@ -180,83 +159,80 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
   }
 
   Widget _card(SpecialTest t) {
+    final c = context.mc;
     final st = t.statusAt(ApiClient.instance.serverNow);
     final pending = QuizSession.load(QuizLauncher.specialKey(t.id)) != null;
     final active = st == SpecialStatus.active;
     final done = st == SpecialStatus.done;
-    final iconColor = done ? const Color(0xFF9C27B0) : (active ? AppColors.primary : AppColors.textMuted);
+    final tone = done ? MedallionTone.pur : (active ? MedallionTone.ok : MedallionTone.grey);
 
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(20),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(20),
-        onTap: () => _open(t),
-        child: Padding(
-          padding: const EdgeInsets.all(18),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    width: 60,
-                    height: 60,
-                    decoration: BoxDecoration(color: iconColor.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(14)),
-                    child: Icon(done ? Iconsax.tick_circle_copy : Iconsax.document_text_copy, color: iconColor, size: 30),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(t.name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-                        if ((t.description ?? '').isNotEmpty) ...[
-                          const SizedBox(height: 2),
-                          Text(t.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: TextStyle(color: AppColors.textMuted)),
+    return PressScale(
+      scale: 0.98,
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _open(t),
+          child: DoubleFrame(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    StarMedallion(size: 54, tone: tone, icon: done ? Iconsax.task_square : Iconsax.document_text_copy),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(t.name, style: AppTheme.display(23, FontWeight.w700, 27, c.ink)),
+                          if ((t.description ?? '').isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(t.description!, maxLines: 2, overflow: TextOverflow.ellipsis, style: AppTheme.body(13, FontWeight.w400, 18, c.muted)),
+                          ],
                         ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    Pill.tone(context, text: '${t.realQuestionCount} ta savol', tone: PillTone.info, icon: Iconsax.message_question),
+                    Pill.tone(context, text: _timeLabel(t), tone: PillTone.warn, icon: Iconsax.clock),
+                    _statusPill(st),
+                    if (pending && active) Pill.tone(context, text: 'Davom ettirish', tone: PillTone.warn, icon: Iconsax.play),
+                  ],
+                ),
+                if (t.start != null || t.end != null) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: active ? c.okTint : c.card2,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: active ? c.ok.withValues(alpha: 0.35) : c.hair),
+                    ),
+                    child: Row(
+                      children: [
+                        MIcon(Iconsax.calendar, size: 17, color: active ? c.ok : c.muted),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            '${t.start != null ? formatDate(t.start!) : '...'}  —  ${t.end != null ? formatDate(t.end!) : '...'}',
+                            style: AppTheme.body(13, FontWeight.w500, 18, active ? c.okText : c.muted),
+                          ),
+                        ),
                       ],
                     ),
                   ),
                 ],
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  Pill(text: '${t.realQuestionCount} ta savol', color: AppColors.blue, background: AppColors.blueSoft, icon: Iconsax.message_question),
-                  Pill(text: _timeLabel(t), color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.clock),
-                  _statusPill(st),
-                  if (pending && active)
-                    Pill(text: 'Davom ettirish', color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.play),
-                ],
-              ),
-              if (t.start != null || t.end != null) ...[
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: active ? AppColors.primarySoft : const Color(0xFFF4F4F5),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: active ? const Color(0xFFBFE3C9) : AppColors.border),
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(Iconsax.calendar, size: 18, color: active ? AppColors.primary : AppColors.textMuted),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: Text(
-                          '${t.start != null ? formatDate(t.start!) : '...'}  —  ${t.end != null ? formatDate(t.end!) : '...'}',
-                          style: TextStyle(color: active ? AppColors.primaryDark : AppColors.textMuted),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
-            ],
+            ),
           ),
         ),
       ),
@@ -275,9 +251,9 @@ class _SpecialTestsScreenState extends State<SpecialTestsScreen> {
   }
 
   Widget _statusPill(SpecialStatus st) => switch (st) {
-    SpecialStatus.active => Pill(text: 'Faol', color: AppColors.primaryDark, background: AppColors.primarySoft, icon: Iconsax.tick_circle_copy),
-    SpecialStatus.upcoming => Pill(text: 'Boshlanmagan', color: AppColors.blue, background: AppColors.blueSoft, icon: Iconsax.timer_start),
-    SpecialStatus.expired => Pill(text: 'Faol emas', color: AppColors.textMuted, background: Color(0xFFF0F1F3), icon: Iconsax.timer_pause),
-    SpecialStatus.done => const Pill(text: 'Yechilgan', color: Color(0xFF9C27B0), background: Color(0xFFF6E8F9), icon: Iconsax.task_square),
+    SpecialStatus.active => Pill.tone(context, text: 'Faol', tone: PillTone.ok, icon: Iconsax.tick_circle_copy),
+    SpecialStatus.upcoming => Pill.tone(context, text: 'Boshlanmagan', tone: PillTone.info, icon: Iconsax.timer_start),
+    SpecialStatus.expired => Pill.tone(context, text: 'Faol emas', tone: PillTone.grey, icon: Iconsax.timer_pause),
+    SpecialStatus.done => Pill.tone(context, text: 'Yechilgan', tone: PillTone.pur, icon: Iconsax.task_square),
   };
 }

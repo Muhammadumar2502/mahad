@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../core/session.dart';
@@ -13,124 +14,156 @@ class RateScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final me = Session.user?.id;
-    return Scaffold(
-      body: AsyncView<List<RateEntry>>(
-        load: Repo.rating,
-        refreshInterval: const Duration(seconds: 30),
-        builder: (context, list, refresh) => RefreshIndicator(
-          color: AppColors.primary,
-          onRefresh: refresh,
-          child: CustomScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            slivers: [
-              SliverAppBar(
-                pinned: true,
-                expandedHeight: 170,
-                backgroundColor: const Color(0xFF4CAF6E),
-                foregroundColor: Colors.white,
-                leading: Padding(
-                  padding: const EdgeInsets.all(8),
-                  child: IconButton(
-                    style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.25)),
-                    icon: const Icon(Iconsax.arrow_left_2, color: Colors.white),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                flexibleSpace: FlexibleSpaceBar(
-                  titlePadding: const EdgeInsetsDirectional.only(start: 64, bottom: 16),
-                  title: const Text('Liderlar', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 24)),
-                  background: Container(
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(colors: [Color(0xFF4CAF6E), Color(0xFFB8A04A)]),
+    final c = context.mc;
+    final top = MediaQuery.of(context).padding.top;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: c.pageFlat,
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: c.pageGradient),
+          child: AsyncView<List<RateEntry>>(
+            load: Repo.rating,
+            refreshInterval: const Duration(seconds: 30),
+            builder: (context, list, refresh) => RefreshIndicator(
+              color: c.spinner,
+              onRefresh: refresh,
+              child: CustomScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                slivers: [
+                  SliverAppBar(
+                    pinned: true,
+                    expandedHeight: 200 - top,
+                    toolbarHeight: (104 - top).clamp(56.0, 104.0),
+                    backgroundColor: Colors.transparent,
+                    surfaceTintColor: Colors.transparent,
+                    automaticallyImplyLeading: false,
+                    leadingWidth: 76,
+                    leading: Center(
+                      child: BandIconButton(asset: MahadIcons.back, onPressed: () => Navigator.pop(context)),
                     ),
-                    child: Stack(
-                      children: [
-                        Positioned(right: -10, top: 10, child: Icon(Iconsax.cup_copy, size: 150, color: Colors.white.withValues(alpha: 0.15))),
-                        Positioned(left: -20, bottom: -20, child: Icon(Iconsax.star_1, size: 120, color: Colors.white.withValues(alpha: 0.1))),
-                      ],
+                    flexibleSpace: LayoutBuilder(
+                      builder: (context, box) {
+                        final minH = (104 - top).clamp(56.0, 104.0) + top;
+                        final t = ((box.maxHeight - minH) / (200 - minH)).clamp(0.0, 1.0);
+                        return BandBackground(
+                          height: box.maxHeight,
+                          child: Stack(
+                            children: [
+                              Positioned(
+                                right: 22,
+                                top: 50,
+                                child: Opacity(opacity: 0.35 * t, child: MahadIcon(MahadIcons.trophy, size: 96, color: c.bandOrn)),
+                              ),
+                              Positioned(
+                                left: -14,
+                                bottom: 10,
+                                child: Opacity(opacity: 0.22 * t, child: MahadIcon(MahadIcons.starOutline, size: 86, color: c.bandOrn)),
+                              ),
+                              Align(
+                                alignment: Alignment(0, 0.15 + 0.45 * t),
+                                child: Padding(
+                                  padding: EdgeInsets.only(top: top * (1 - t)),
+                                  child: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'Liderlar',
+                                        style: AppTheme.display(24 + 14 * t, FontWeight.w700, 30 + 14 * t, c.bandText),
+                                      ),
+                                      if (t > 0.4) ...[const SizedBox(height: 4), Opacity(opacity: (t - 0.4) / 0.6, child: const Ornament())],
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
                   ),
-                ),
+                  if (list.isEmpty)
+                    const SliverFillRemaining(child: EmptyView(title: "Reyting hali shakllanmagan", icon: Iconsax.cup))
+                  else
+                    SliverPadding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+                      sliver: SliverList.separated(
+                        itemCount: list.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 10),
+                        itemBuilder: (context, i) => FadeSlideIn(index: i, child: _row(context, i + 1, list[i], list[i].studentId == me)),
+                      ),
+                    ),
+                ],
               ),
-              if (list.isEmpty)
-                const SliverFillRemaining(child: EmptyView(title: "Reyting hali shakllanmagan", icon: Iconsax.cup))
-              else
-                SliverPadding(
-                  padding: const EdgeInsets.all(16),
-                  sliver: SliverList.separated(
-                    itemCount: list.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _row(i + 1, list[i], list[i].studentId == me),
-                  ),
-                ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _row(int rank, RateEntry e, bool isMe) {
-    const medals = [Color(0xFFFFD000), Color(0xFFBDBDBD), Color(0xFFCD8B4A)];
-    final chip = e.average >= 80 ? AppColors.primary : (e.average >= 60 ? AppColors.orange : AppColors.red);
-    return Container(
-      padding: const EdgeInsets.all(14),
+  Widget _row(BuildContext context, int rank, RateEntry e, bool isMe) {
+    final c = context.mc;
+    final medals = [
+      [c.medalGoldStart, c.medalGoldEnd],
+      [c.medalSilverStart, c.medalSilverEnd],
+      [c.medalBronzeStart, c.medalBronzeEnd],
+    ];
+    final tone = e.average >= 80 ? PercentTone.ok : (e.average >= 60 ? PercentTone.warn : PercentTone.bad);
+    return DecoratedBox(
       decoration: BoxDecoration(
-        color: isMe ? const Color(0xFFDDF1E3) : AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: isMe ? const Color(0xFF9BD3AE) : AppColors.border, width: isMe ? 1.5 : 1),
+        borderRadius: BorderRadius.circular(12),
+        border: isMe ? Border.all(color: c.ownBd, width: 1.5) : null,
       ),
-      child: Row(
-        children: [
-          if (rank <= 3)
-            Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                color: medals[rank - 1],
-                shape: BoxShape.circle,
-                boxShadow: [BoxShadow(color: medals[rank - 1].withValues(alpha: 0.4), blurRadius: 10, offset: const Offset(0, 4))],
+      child: DoubleFrame(
+        color: isMe ? c.ownBg : null,
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 48,
+              height: 48,
+              child: rank <= 3
+                  ? ClipPath(
+                      clipper: _StarClipper(),
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(gradient: LinearGradient(begin: Alignment.topLeft, end: Alignment.bottomRight, colors: medals[rank - 1])),
+                        child: Center(child: MIcon(Iconsax.medal_star_copy, color: c.ink, size: 20)),
+                      ),
+                    )
+                  : DecoratedBox(
+                      decoration: ShapeDecoration(color: c.card, shape: octagonBorder(48, side: BorderSide(color: c.gold))),
+                      child: Center(child: Text('$rank', style: AppTheme.display(20, FontWeight.w700, 22, c.ink))),
+                    ),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isMe ? '${e.name} (siz)' : e.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppTheme.body(15.5, FontWeight.w600, 21, c.ink),
+                  ),
+                  const SizedBox(height: 6),
+                  Pill.tone(context, text: '${e.attempts} ta', tone: PillTone.gold, icon: Iconsax.clipboard_tick_copy),
+                ],
               ),
-              child: const Icon(Iconsax.medal_star_copy, color: Colors.white, size: 30),
-            )
-          else
-            Container(
-              width: 56,
-              height: 56,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                shape: BoxShape.circle,
-                border: Border.all(color: const Color(0xFFCBE8D4), width: 2),
-              ),
-              child: Text('$rank', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: AppColors.primary)),
             ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isMe ? '${e.name} (siz)' : e.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(height: 6),
-                Pill(text: '${e.attempts} ta', color: AppColors.primaryDark, background: AppColors.primarySoft, icon: Iconsax.clipboard_tick_copy),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(color: chip, borderRadius: BorderRadius.circular(10)),
-            child: Text(
-              formatPercent(double.parse(e.average.toStringAsFixed(1))),
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 16),
-            ),
-          ),
-        ],
+            PercentBadge(text: formatPercent(double.parse(e.average.toStringAsFixed(1))), tone: tone, solid: true),
+          ],
+        ),
       ),
     );
   }
+}
+
+class _StarClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) => octagramPath(Offset.zero & size);
+
+  @override
+  bool shouldReclip(_StarClipper oldClipper) => false;
 }

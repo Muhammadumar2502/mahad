@@ -7,6 +7,7 @@ import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../data/repository.dart';
 import '../../widgets/common.dart';
+import '../../widgets/theme_switch_tile.dart';
 import '../auth/login_screen.dart';
 import '../rate/rate_screen.dart';
 import '../results/results_screen.dart';
@@ -58,77 +59,82 @@ class _ProfileTabState extends State<ProfileTab> {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mc;
     final u = Session.user;
     return RefreshIndicator(
-      color: AppColors.primary,
+      color: c.spinner,
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(colors: [Color(0xFF4CAF6E), Color(0xFF7CC896)]),
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 32,
-                  backgroundColor: Colors.white,
-                  child: Text(
-                    (u?.name.isNotEmpty ?? false) ? u!.name.characters.first.toUpperCase() : '?',
-                    style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.primary),
+          FadeSlideIn(
+            child: DoubleFrame(
+              shadow: true,
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  StarMedallion(
+                    size: 64,
+                    tone: MedallionTone.emerald,
+                    child: Text(
+                      (u?.name.isNotEmpty ?? false) ? u!.name.characters.first.toUpperCase() : '?',
+                      style: AppTheme.display(26, FontWeight.w700, 28, c.bandText),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(u?.name ?? '', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 4),
-                      Text(_formatPhone(u?.phone ?? ''), style: const TextStyle(color: Colors.white, fontSize: 15)),
-                    ],
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(u?.name ?? '', style: AppTheme.display(25, FontWeight.w700, 29, c.ink)),
+                        const SizedBox(height: 2),
+                        Text(_formatPhone(u?.phone ?? ''), style: AppTheme.body(14, FontWeight.w400, 19, c.muted)),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          _card([
-            _row(Iconsax.people, 'Guruh', _loading && _group == null ? '...' : (_group?.name ?? 'Biriktirilmagan')),
-            if (_group != null) _row(Iconsax.timer_1, 'Taymer', _group!.timingLabel),
-          ]),
           const SizedBox(height: 12),
-          _card([
-            _nav(Iconsax.clipboard_tick, 'Mening natijalarim', () => _push(const ResultsScreen())),
-            _nav(Iconsax.cup, 'Liderlar', () => _push(const RateScreen())),
-            _nav(Iconsax.star, 'Maxsus testlar', () => _push(const SpecialTestsScreen())),
-          ]),
+          FadeSlideIn(
+            index: 1,
+            child: _card([
+              _row(Iconsax.people, 'Guruh', _loading && _group == null ? '...' : (_group?.name ?? 'Biriktirilmagan')),
+              if (_group != null) _row(Iconsax.timer_1, 'Taymer', _group!.timingLabel),
+            ]),
+          ),
           const SizedBox(height: 12),
-          _card([
-            _row(Iconsax.mobile, 'Qurilma', _device?.name ?? (_loading ? '...' : '—')),
-            if (_device?.createdAt != null) _row(Iconsax.calendar_tick, "Ulangan", formatDate(_device!.createdAt!)),
-            _row(Iconsax.info_circle, 'Ilova versiyasi', '${DeviceData.appVersion} (${DeviceData.buildNumber})'),
-          ]),
-          const SizedBox(height: 8),
+          FadeSlideIn(
+            index: 2,
+            child: _card([
+              _nav(Iconsax.clipboard_tick, 'Mening natijalarim', () => _push(const ResultsScreen())),
+              _nav(Iconsax.cup, 'Liderlar', () => _push(const RateScreen())),
+              _nav(Iconsax.star, 'Maxsus testlar', () => _push(const SpecialTestsScreen())),
+            ]),
+          ),
+          const SizedBox(height: 12),
+          FadeSlideIn(index: 3, child: _card([const ThemeSwitchTile()])),
+          const SizedBox(height: 12),
+          FadeSlideIn(
+            index: 4,
+            child: _card([
+              _row(Iconsax.mobile, 'Qurilma', _device?.name ?? (_loading ? '...' : '—')),
+              if (_device?.createdAt != null) _row(Iconsax.calendar_tick, "Ulangan", formatDate(_device!.createdAt!)),
+              _row(Iconsax.info_circle, 'Ilova versiyasi', '${DeviceData.appVersion} (${DeviceData.buildNumber})'),
+            ]),
+          ),
+          const SizedBox(height: 10),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Text(
               "Akkaunt faqat shu qurilmada ishlaydi. Boshqa telefonga o'tish uchun admin qurilmani o'chirib berishi kerak.",
-              style: TextStyle(color: AppColors.textMuted, fontSize: 12.5),
+              style: AppTheme.body(12.5, FontWeight.w400, 18, c.muted),
             ),
           ),
-          const SizedBox(height: 20),
-          OutlinedButton.icon(
-            style: OutlinedButton.styleFrom(foregroundColor: AppColors.red, side: BorderSide(color: AppColors.redSoft, width: 1.5)),
-            onPressed: _logout,
-            icon: const Icon(Iconsax.logout),
-            label: const Text('Chiqish'),
-          ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 18),
+          MahadButton(kind: MahadButtonKind.danger, onPressed: _logout, icon: Iconsax.logout, label: 'Chiqish'),
         ],
       ),
     );
@@ -136,33 +142,62 @@ class _ProfileTabState extends State<ProfileTab> {
 
   void _push(Widget w) => Navigator.push(context, MaterialPageRoute(builder: (_) => w));
 
-  Widget _card(List<Widget> children) => Card(
-    clipBehavior: Clip.antiAlias,
+  Widget _card(List<Widget> children) => DoubleFrame(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
     child: Column(
       children: [
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) const Divider(height: 1, indent: 56),
+          if (i > 0) const DashedLine(indent: 34),
           children[i],
         ],
       ],
     ),
   );
 
-  Widget _row(IconData icon, String label, String value) => ListTile(
-    leading: Icon(icon, color: AppColors.primary),
-    title: Text(label, style: TextStyle(color: AppColors.textMuted, fontSize: 14)),
-    trailing: ConstrainedBox(
-      constraints: const BoxConstraints(maxWidth: 190),
-      child: Text(value, textAlign: TextAlign.right, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontWeight: FontWeight.w600)),
-    ),
-  );
+  Widget _row(IconData icon, String label, String value) {
+    final c = context.mc;
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 46),
+      child: Row(
+        children: [
+          MIcon(icon, color: c.icon, size: 20),
+          const SizedBox(width: 14),
+          Text(label, style: AppTheme.body(14, FontWeight.w400, 19, c.muted)),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.body(14, FontWeight.w600, 19, c.ink),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  Widget _nav(IconData icon, String label, VoidCallback onTap) => ListTile(
-    leading: Icon(icon, color: AppColors.primary),
-    title: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
-    trailing: const Icon(Iconsax.arrow_right_3),
-    onTap: onTap,
-  );
+  Widget _nav(IconData icon, String label, VoidCallback onTap) {
+    final c = context.mc;
+    return PressScale(
+      scale: 0.98,
+      child: InkWell(
+        onTap: onTap,
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 50),
+          child: Row(
+            children: [
+              MIcon(icon, color: c.icon, size: 20),
+              const SizedBox(width: 14),
+              Expanded(child: Text(label, style: AppTheme.body(15.5, FontWeight.w600, 21, c.ink))),
+              MahadIcon(MahadIcons.chevronRight, size: 18, color: c.goldText),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   static String _formatPhone(String p) {
     final d = p.replaceAll(RegExp(r'\D'), '');

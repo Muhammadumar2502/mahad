@@ -58,7 +58,7 @@ class _MainShellState extends State<MainShell>
     final c = context.mc;
     final fade = CurvedAnimation(parent: _fade, curve: Curves.easeOutCubic);
     Widget tab(int i, Widget child) => Padding(
-      padding: EdgeInsets.only(top: i <= 1 ? _band - _overlap : _band),
+      padding: EdgeInsets.only(top: i == 2 ? _band : _band - _overlap),
       child: child,
     );
     return AnnotatedRegion<SystemUiOverlayStyle>(

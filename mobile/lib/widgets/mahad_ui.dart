@@ -258,7 +258,7 @@ class _SpinnerPainter extends CustomPainter {
 
 // ───────────────────────── Medallions ─────────────────────────
 
-enum MedallionTone { soft, bad, ok, gold, pur, info, grey, warn }
+enum MedallionTone { soft, bad, ok, gold, pur, info, grey, warn, emerald }
 
 /// Eight-pointed star medallion with an icon (empty / error states, special tests, info marks).
 class StarMedallion extends StatelessWidget {
@@ -281,6 +281,7 @@ class StarMedallion extends StatelessWidget {
       MedallionTone.info => (c.infoSoft, c.info.withValues(alpha: 0.55), c.info),
       MedallionTone.grey => (c.greySoft, c.hair, c.greyText),
       MedallionTone.warn => (c.warnSoft, c.warn.withValues(alpha: 0.55), c.warn),
+      MedallionTone.emerald => (c.emerald, c.gold, c.bandText),
     };
     return SizedBox(
       width: size,
