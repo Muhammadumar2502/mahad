@@ -72,8 +72,9 @@ class _SectionScreenState extends State<SectionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title)),
+    final c = context.mc;
+    return BandPage(
+      title: widget.title,
       body: AsyncView<SectionDetail>(
         key: _view,
         load: () => Repo.section(widget.sectionId),
@@ -81,180 +82,245 @@ class _SectionScreenState extends State<SectionScreen> {
         builder: (context, s, refresh) {
           final pending = s.testId == null ? null : QuizSession.load(QuizLauncher.bookKey(s.testId!));
           final pass = s.book?.passingPercentage ?? widget.passPercent ?? 60;
-          return RefreshIndicator(
-            color: AppColors.primary,
-            onRefresh: refresh,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              padding: const EdgeInsets.only(bottom: 32),
-              children: [
-                Container(
-                  height: 170,
-                  margin: const EdgeInsets.only(bottom: 4),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface,
-                    borderRadius: BorderRadius.vertical(bottom: Radius.circular(24)),
-                  ),
-                  alignment: Alignment.center,
-                  child: Container(
-                    width: 104,
-                    height: 104,
-                    decoration: BoxDecoration(color: AppColors.primarySoft, borderRadius: BorderRadius.circular(22)),
-                    child: Icon(Iconsax.book_1, color: AppColors.primary, size: 56),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 12, 8, 4),
-                  child: Row(
+          final rows = <Widget>[
+            if (pending != null)
+              _attemptTile(
+                icon: Iconsax.clipboard_text,
+                tone: PercentTone.warn,
+                title: 'Tugallanmagan',
+                trailing: '${pending.answeredCount}/${pending.total}',
+                onTap: () => _start(s),
+              ),
+            for (final a in s.attempts)
+              _attemptTile(
+                icon: Iconsax.tick_circle,
+                tone: percentTone(s.questionCount == 0 ? 0 : a.solved * 100 / s.questionCount, pass: pass),
+                title: formatDate(a.date),
+                trailing: '${a.solved}/${s.questionCount}',
+                onTap: () {
+                  final data = ReviewData.fromRecord(ResultRecord(
+                    id: a.id,
+                    kind: ResultKind.book,
+                    solved: a.solved,
+                    total: s.questionCount,
+                    date: a.date,
+                    title: s.name,
+                    answers: a.answers,
+                  ));
+                  if (data == null) return;
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(title: s.name, data: data)));
+                },
+              ),
+          ];
+          final showButtons = s.hasTest && !s.isBlocked;
+          return Column(
+            children: [
+              Expanded(
+                child: RefreshIndicator(
+                  color: c.spinner,
+                  onRefresh: refresh,
+                  child: ListView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
                     children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(s.name, style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w600)),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Jami: ${s.questionCount} ta${s.bookName != null ? '  ·  ${s.bookName}' : ''}',
-                              style: TextStyle(color: AppColors.textMuted),
+                      FadeSlideIn(child: _header(s)),
+                      if (s.isBlocked) ...[
+                        const SizedBox(height: 12),
+                        FadeSlideIn(
+                          index: 1,
+                          child: Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: c.badTint,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: c.bad.withValues(alpha: 0.45)),
                             ),
-                          ],
+                            child: Row(
+                              children: [
+                                MIcon(Iconsax.lock_1, color: c.bad, size: 20),
+                                const SizedBox(width: 10),
+                                Expanded(child: Text(s.blockReason, style: AppTheme.body(13.5, FontWeight.w600, 20, c.badText))),
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
-                      IconButton(
-                        style: IconButton.styleFrom(backgroundColor: const Color(0xFFF0F1F3)),
-                        onPressed: () => _toggleSave(s),
-                        icon: Icon(
-                          _isSaved ? Iconsax.heart_copy : Iconsax.heart,
-                          color: _isSaved ? AppColors.red : AppColors.textMuted,
+                      ],
+                      if (s.attempts.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(2, 18, 2, 8),
+                          child: Row(
+                            children: [
+                              Text('Urinishlar', style: AppTheme.display(23, FontWeight.w700, 27, c.ink)),
+                              const Spacer(),
+                              Text(
+                                'Eng yaxshi: ${formatPercent(double.parse(s.bestPercent.toStringAsFixed(1)))}',
+                                style: AppTheme.body(13, FontWeight.w700, 18, percentColor(s.bestPercent, pass: pass)),
+                              ),
+                            ],
+                          ),
+                        )
+                      else if (pending != null)
+                        const SizedBox(height: 12),
+                      if (rows.isNotEmpty)
+                        FadeSlideIn(
+                          index: 2,
+                          child: DoubleFrame(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                            child: Column(
+                              children: [
+                                for (var i = 0; i < rows.length; i++) ...[if (i > 0) const DashedLine(), rows[i]],
+                              ],
+                            ),
+                          ),
                         ),
-                      ),
+                      if (!s.hasTest)
+                        const Padding(
+                          padding: EdgeInsets.all(16),
+                          child: EmptyView(title: "Bu bo'limga hali test qo'shilmagan", icon: Iconsax.timer),
+                        ),
                     ],
                   ),
                 ),
-                if (s.isBlocked)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(14)),
-                      child: Row(
-                        children: [
-                          Icon(Iconsax.lock_1, color: AppColors.red),
-                          const SizedBox(width: 10),
-                          Expanded(child: Text(s.blockReason, style: TextStyle(color: AppColors.red))),
-                        ],
-                      ),
-                    ),
-                  ),
-                if (s.attempts.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-                    child: Row(
-                      children: [
-                        const Text('Urinishlar', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                        const Spacer(),
-                        Text('Eng yaxshi: ${formatPercent(double.parse(s.bestPercent.toStringAsFixed(1)))}',
-                            style: TextStyle(color: percentColor(s.bestPercent, pass: pass), fontWeight: FontWeight.w600)),
-                      ],
-                    ),
-                  ),
-                if (pending != null)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                    child: _attemptTile(
-                      icon: Iconsax.clipboard_text,
-                      color: AppColors.orange,
-                      title: 'Tugallanmagan',
-                      trailing: '${pending.answeredCount}/${pending.total}',
-                      onTap: () => _start(s),
-                    ),
-                  ),
-                for (final a in s.attempts)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
-                    child: _attemptTile(
-                      icon: Iconsax.tick_circle,
-                      color: percentColor(s.questionCount == 0 ? 0 : a.solved * 100 / s.questionCount, pass: pass),
-                      title: formatDate(a.date),
-                      trailing: '${a.solved}/${s.questionCount}',
-                      onTap: () {
-                        final data = ReviewData.fromRecord(ResultRecord(
-                          id: a.id,
-                          kind: ResultKind.book,
-                          solved: a.solved,
-                          total: s.questionCount,
-                          date: a.date,
-                          title: s.name,
-                          answers: a.answers,
-                        ));
-                        if (data == null) return;
-                        Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(title: s.name, data: data)));
-                      },
-                    ),
-                  ),
-                const SizedBox(height: 24),
-                if (s.hasTest && !s.isBlocked)
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+              ),
+              if (showButtons)
+                DecoratedBox(
+                  decoration: BoxDecoration(color: c.navBg),
+                  child: SafeArea(
+                    top: false,
                     child: Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _start(s),
-                          icon: Icon(pending != null ? Iconsax.play : Iconsax.document_text),
-                          label: Text(pending != null ? 'Davom ettirish' : 'Testni boshlash'),
+                        Container(height: 1, color: c.bandLine),
+                        const SizedBox(height: 2),
+                        Container(height: 1, color: c.bandLine),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                          child: Column(
+                            children: [
+                              MahadButton(
+                                onPressed: () => _start(s),
+                                icon: pending != null ? Iconsax.play : Iconsax.document_text,
+                                label: pending != null ? 'Davom ettirish' : 'Testni boshlash',
+                              ),
+                              if (pending != null) ...[
+                                const SizedBox(height: 10),
+                                MahadButton(
+                                  kind: MahadButtonKind.secondary,
+                                  onPressed: () => _start(s, restart: true),
+                                  label: 'Yangidan boshlash',
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                        if (pending != null) ...[
-                          const SizedBox(height: 10),
-                          OutlinedButton(onPressed: () => _start(s, restart: true), child: const Text('Yangidan boshlash')),
-                        ],
                       ],
                     ),
-                  )
-                else if (!s.hasTest)
-                  const Padding(
-                    padding: EdgeInsets.all(16),
-                    child: EmptyView(title: "Bu bo'limga hali test qo'shilmagan", icon: Iconsax.timer),
                   ),
-              ],
-            ),
+                ),
+            ],
           );
         },
       ),
     );
   }
 
+  Widget _header(SectionDetail s) {
+    final c = context.mc;
+    final saved = _isSaved;
+    return DoubleFrame(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        children: [
+          Container(
+            width: 66,
+            height: 80,
+            decoration: ShapeDecoration(color: c.okSoft, shape: MihrabBorder(side: BorderSide(color: c.frame))),
+            padding: const EdgeInsets.only(top: 16),
+            child: Center(child: MIcon(Iconsax.book_1, color: c.ok, size: 26)),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(s.name, style: AppTheme.display(25, FontWeight.w700, 29, c.ink)),
+                const SizedBox(height: 3),
+                Text(
+                  'Jami: ${s.questionCount} ta${s.bookName != null ? '  ·  ${s.bookName}' : ''}',
+                  style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted),
+                ),
+              ],
+            ),
+          ),
+          PressScale(
+            child: Material(
+              color: saved ? c.badSoft : c.card,
+              shape: octagonBorder(44, side: BorderSide(color: saved ? c.bad.withValues(alpha: 0.6) : c.frame)),
+              child: InkWell(
+                customBorder: octagonBorder(44),
+                onTap: () => _toggleSave(s),
+                child: SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: Center(
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 260),
+                      transitionBuilder: (child, a) => ScaleTransition(scale: CurvedAnimation(parent: a, curve: Curves.elasticOut), child: child),
+                      child: MIcon(
+                        saved ? Iconsax.heart_copy : Iconsax.heart,
+                        key: ValueKey(saved),
+                        color: saved ? c.bad : c.muted,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _attemptTile({
     required IconData icon,
-    required Color color,
+    required PercentTone tone,
     required String title,
     required String trailing,
     required VoidCallback onTap,
   }) {
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(14),
+    final c = context.mc;
+    final (fg, soft) = switch (tone) {
+      PercentTone.ok => (c.okText, c.okSoft),
+      PercentTone.warn => (c.warnText, c.warnSoft),
+      PercentTone.bad => (c.badText, c.badSoft),
+    };
+    final mark = icon == Iconsax.tick_circle ? MahadIcon(MahadIcons.check, color: fg, size: 18) : MIcon(icon, color: fg, size: 18);
+    return PressScale(
+      scale: 0.98,
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(8),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 10),
           child: Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: color),
+                width: 40,
+                height: 40,
+                decoration: ShapeDecoration(color: soft, shape: octagonBorder(40, side: BorderSide(color: fg.withValues(alpha: 0.35)))),
+                child: Center(child: mark),
               ),
               const SizedBox(width: 14),
-              Expanded(child: Text(title, style: const TextStyle(fontSize: 15.5))),
+              Expanded(child: Text(title, style: AppTheme.body(15.5, FontWeight.w500, 21, c.ink))),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(color: color.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(10)),
-                child: Text(trailing, style: TextStyle(fontWeight: FontWeight.w700, color: color)),
+                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+                decoration: ShapeDecoration(color: soft, shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(6))),
+                child: Text(trailing, style: AppTheme.body(12.5, FontWeight.w700, 16, fg)),
               ),
-              const SizedBox(width: 4),
-              Icon(Iconsax.arrow_right_3, color: AppColors.primary),
+              const SizedBox(width: 6),
+              MahadIcon(MahadIcons.chevronRight, size: 18, color: c.goldText),
             ],
           ),
         ),

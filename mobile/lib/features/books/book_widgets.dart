@@ -30,9 +30,10 @@ class BookCard extends StatelessWidget {
                   alignment: Alignment.center,
                   children: [
                     ArchPlate(
-                      width: 92,
-                      height: 108,
-                      child: Opacity(opacity: locked ? 0.45 : 1, child: NetImage(path: book.image, fit: BoxFit.contain)),
+                      width: 96,
+                      height: 116,
+                      padding: 4,
+                      child: Opacity(opacity: locked ? 0.45 : 1, child: Padding(padding: const EdgeInsets.fromLTRB(2, 14, 2, 2), child: NetImage(path: book.image, fit: BoxFit.cover))),
                     ),
                     if (locked)
                       Positioned(
@@ -93,16 +94,16 @@ class BooksGrid extends StatelessWidget {
           )
         else
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
             sliver: SliverGrid(
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
-                mainAxisSpacing: 14,
-                crossAxisSpacing: 14,
-                childAspectRatio: 0.85,
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 0.8,
               ),
               delegate: SliverChildBuilderDelegate(
-                (_, i) => BookCard(book: books[i], onTap: () => onTap(books[i])),
+                (_, i) => FadeSlideIn(index: i, child: BookCard(book: books[i], onTap: () => onTap(books[i]))),
                 childCount: books.length,
               ),
             ),

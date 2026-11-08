@@ -35,20 +35,16 @@ class _BooksTabState extends State<BooksTab> {
         final q = _search.text.trim().toLowerCase();
         final shown = q.isEmpty ? books : books.where((b) => b.name.toLowerCase().contains(q)).toList();
         return RefreshIndicator(
-          color: AppColors.primary,
+          color: context.mc.spinner,
           onRefresh: refresh,
           child: BooksGrid(
             books: shown,
             header: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-              child: TextField(
+              padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+              child: MahadSearchField(
                 controller: _search,
+                hint: 'Kitob qidirish',
                 onChanged: (_) => setState(() {}),
-                decoration: InputDecoration(
-                  hintText: 'Kitob qidirish',
-                  fillColor: AppColors.surface,
-                  prefixIcon: Icon(Iconsax.search_normal_1, color: AppColors.primary),
-                ),
               ),
             ),
             onTap: (b) => openBook(context, b, () => BookScreen(book: b)),

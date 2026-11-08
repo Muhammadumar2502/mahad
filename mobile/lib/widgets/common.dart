@@ -9,12 +9,14 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../core/api_client.dart';
 import '../core/env.dart';
 import '../core/theme.dart';
+import 'mahad_icons.dart';
 import 'mahad_shapes.dart';
 import 'mahad_ui.dart';
 
 export 'mahad_ui.dart' show MIcon, PressScale, FadeSlideIn, MahadSpinner, StarMedallion, MedallionTone, MahadButton, MahadButtonKind, CornerFrame, showMahadDialog;
 export 'mahad_shapes.dart';
 export 'mahad_icons.dart';
+export 'band_page.dart';
 
 /// Future'ni yuklaydi va loading / xato (qayta urinish) / bo'sh / ma'lumot
 /// holatlarini bir xil ko'rsatadi. Pastga tortib yangilash ham bor.
@@ -296,7 +298,7 @@ class NetImage extends StatelessWidget {
 
 /// Mihrab-arch image plate (subject: dark green plate, book: parchment `imgPlate`).
 class ArchPlate extends StatelessWidget {
-  const ArchPlate({super.key, required this.child, this.width = 96, this.height = 116, this.color, this.padding = 6});
+  const ArchPlate({super.key, required this.child, this.width = 96, this.height = 116, this.color, this.padding = 4});
 
   final Widget child;
   final double width;
@@ -310,12 +312,92 @@ class ArchPlate extends StatelessWidget {
     return Container(
       width: width,
       height: height,
-      decoration: ShapeDecoration(
-        color: color ?? c.imgPlate,
-        shape: MihrabBorder(side: BorderSide(color: c.frame)),
+      decoration: ShapeDecoration(color: color ?? c.imgPlate, shape: MihrabBorder(side: BorderSide(color: c.gold.withValues(alpha: 0.85), width: 1.2))),
+      padding: EdgeInsets.all(padding),
+      child: ClipPath(
+        clipper: ShapeBorderClipper(shape: const MihrabBorder()),
+        child: DecoratedBox(
+          position: DecorationPosition.foreground,
+          decoration: ShapeDecoration(shape: MihrabBorder(side: BorderSide(color: c.gold.withValues(alpha: 0.35)))),
+          child: SizedBox.expand(child: child),
+        ),
       ),
-      padding: EdgeInsets.fromLTRB(padding, height * 0.2, padding, padding),
-      child: child,
+    );
+  }
+}
+
+/// Dashed hairline separator between rows inside one DoubleFrame.
+class DashedLine extends StatelessWidget {
+  const DashedLine({super.key, this.indent = 0});
+
+  final double indent;
+
+  @override
+  Widget build(BuildContext context) {
+    final col = context.mc.hair;
+    return Padding(
+      padding: EdgeInsets.only(left: indent),
+      child: LayoutBuilder(
+        builder: (_, box) {
+          final n = (box.maxWidth / 7).floor();
+          return Row(children: [for (var i = 0; i < n; i++) Container(width: 4, height: 1, margin: const EdgeInsets.only(right: 3), color: col)]);
+        },
+      ),
+    );
+  }
+}
+
+/// 50px search field: gold search icon, 32px clear button only while there is text.
+class MahadSearchField extends StatelessWidget {
+  const MahadSearchField({super.key, required this.controller, required this.hint, required this.onChanged, this.onClear});
+
+  final TextEditingController controller;
+  final String hint;
+  final ValueChanged<String> onChanged;
+  /// Null = no clear button (keeps screens that never had one unchanged).
+  final VoidCallback? onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mc;
+    final border = OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide(color: c.inputBd));
+    return SizedBox(
+      height: 50,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.10), blurRadius: 18, offset: const Offset(0, 8), spreadRadius: -12)],
+        ),
+        child: TextField(
+          controller: controller,
+          onChanged: onChanged,
+          style: AppTheme.body(15, FontWeight.w400, 20, c.ink),
+          decoration: InputDecoration(
+            hintText: hint,
+            fillColor: c.card,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+            enabledBorder: border,
+            border: border,
+            prefixIcon: Padding(padding: const EdgeInsets.all(14), child: MIcon(Iconsax.search_normal_1, size: 20, color: c.icon)),
+            suffixIcon: controller.text.isEmpty || onClear == null
+                ? null
+                : Padding(
+                    padding: const EdgeInsets.all(9),
+                    child: PressScale(
+                      child: Material(
+                        color: c.card2,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: onClear,
+                          child: SizedBox(width: 32, height: 32, child: Center(child: MahadIcon(MahadIcons.close, size: 16, color: c.muted))),
+                        ),
+                      ),
+                    ),
+                  ),
+          ),
+        ),
+      ),
     );
   }
 }

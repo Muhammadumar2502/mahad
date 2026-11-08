@@ -49,8 +49,9 @@ class _BookScreenState extends State<BookScreen> {
   @override
   Widget build(BuildContext context) {
     final b = widget.book;
-    return Scaffold(
-      appBar: AppBar(title: Text(b.name)),
+    return BandPage(
+      title: b.name,
+      uppercase: true,
       body: AsyncView<List<SectionDetail>>(
         key: _view,
         load: _load,
@@ -59,18 +60,28 @@ class _BookScreenState extends State<BookScreen> {
         emptyTitle: "Bu kitobda bo'limlar yo'q",
         emptyIcon: Iconsax.note_1,
         builder: (context, list, refresh) => RefreshIndicator(
-          color: AppColors.primary,
+          color: context.mc.spinner,
           onRefresh: refresh,
-          child: ListView.separated(
+          child: ListView(
             physics: const AlwaysScrollableScrollPhysics(),
-            padding: const EdgeInsets.all(16),
-            itemCount: list.length + 1,
-            separatorBuilder: (_, _) => const SizedBox(height: 12),
-            itemBuilder: (_, i) {
-              if (i == 0) return _info(b);
-              final idx = i - 1;
-              return _sectionTile(list[idx], _lockOf(list, idx));
-            },
+            padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+            children: [
+              if (b.stepBlock) ...[FadeSlideIn(child: _info(b)), const SizedBox(height: 12)],
+              FadeSlideIn(
+                index: 1,
+                child: DoubleFrame(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  child: Column(
+                    children: [
+                      for (var i = 0; i < list.length; i++) ...[
+                        if (i > 0) const DashedLine(),
+                        _sectionTile(list[i], _lockOf(list, i)),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -78,18 +89,27 @@ class _BookScreenState extends State<BookScreen> {
   }
 
   Widget _info(Book b) {
-    if (!b.stepBlock) return const SizedBox.shrink();
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(color: AppColors.blueSoft, borderRadius: BorderRadius.circular(14)),
+    final c = context.mc;
+    return DoubleFrame(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 10),
       child: Row(
         children: [
-          Icon(Iconsax.info_circle, color: AppColors.blue),
-          const SizedBox(width: 10),
+          StarMedallion(
+            size: 30,
+            tone: MedallionTone.gold,
+            child: Text('i', style: AppTheme.display(17, FontWeight.w700, 18, c.goldText)),
+          ),
+          const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              "Bo'limlar ketma-ket ochiladi: keyingisiga o'tish uchun kamida ${b.passingPercentage}% natija kerak.",
-              style: TextStyle(color: AppColors.blue, fontSize: 13),
+            child: Text.rich(
+              TextSpan(
+                children: [
+                  const TextSpan(text: "Bo'limlar ketma-ket ochiladi: keyingisiga o'tish uchun kamida "),
+                  TextSpan(text: '${b.passingPercentage}%', style: const TextStyle(fontWeight: FontWeight.w700)),
+                  const TextSpan(text: ' natija kerak.'),
+                ],
+              ),
+              style: AppTheme.body(13, FontWeight.w400, 19, c.ink),
             ),
           ),
         ],
@@ -98,40 +118,31 @@ class _BookScreenState extends State<BookScreen> {
   }
 
   Widget _sectionTile(SectionDetail s, ({bool locked, String reason}) lock) {
+    final c = context.mc;
     final pass = widget.book.passingPercentage;
     final best = s.bestPercent;
     final tried = s.attempts.isNotEmpty;
     final passed = tried && best >= pass;
     final failed = tried && !passed;
 
-    Color accent = AppColors.primary, soft = AppColors.primarySoft;
+    Color plate = c.ok, iconColor = c.okOn;
     IconData icon = Iconsax.book_1;
     if (lock.locked) {
-      accent = AppColors.textMuted;
-      soft = const Color(0xFFF0F1F3);
+      plate = c.cell;
+      iconColor = c.cellText;
       icon = Iconsax.lock_1;
     } else if (failed) {
-      accent = AppColors.red;
-      soft = AppColors.redSoft;
+      plate = c.bad;
+      iconColor = c.badOn;
     }
 
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
+    return PressScale(
+      scale: 0.98,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(8),
         onTap: () async {
           if (lock.locked) {
-            showDialog<void>(
-              context: context,
-              builder: (ctx) => AlertDialog(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                icon: Icon(Iconsax.lock_1, size: 34, color: AppColors.textMuted),
-                title: Text(s.name),
-                content: Text(lock.reason),
-                actions: [TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Tushunarli'))],
-              ),
-            );
+            infoDialog(context, icon: Iconsax.lock_1, title: s.name, message: lock.reason);
             return;
           }
           await Navigator.push(
@@ -140,46 +151,44 @@ class _BookScreenState extends State<BookScreen> {
           );
           _view.currentState?.refresh();
         },
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: lock.locked ? AppColors.border : accent.withValues(alpha: 0.35), width: 1.3),
-          ),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 13),
           child: Row(
             children: [
               Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(color: soft, borderRadius: BorderRadius.circular(12)),
-                child: Icon(icon, color: accent),
+                width: 38,
+                height: 46,
+                decoration: ShapeDecoration(color: plate, shape: const MihrabBorder()),
+                padding: const EdgeInsets.only(top: 10),
+                child: Center(child: MIcon(icon, color: iconColor, size: 18)),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(s.name, style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600, color: lock.locked ? AppColors.textMuted : AppColors.text)),
-                    const SizedBox(height: 3),
+                    Text(
+                      s.name,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: AppTheme.body(15.5, FontWeight.w600, 21, lock.locked ? c.muted : c.ink),
+                    ),
+                    const SizedBox(height: 2),
                     Text(
                       s.hasTest ? '${s.questionCount} ta test${tried ? ' · ${s.attempts.length} urinish' : ''}' : "Test qo'shilmagan",
-                      style: TextStyle(color: AppColors.textMuted, fontSize: 13),
+                      style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               if (tried)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(color: passed ? AppColors.primarySoft : AppColors.redSoft, borderRadius: BorderRadius.circular(10)),
-                  child: Text(
-                    formatPercent(double.parse(best.toStringAsFixed(1))),
-                    style: TextStyle(fontWeight: FontWeight.w700, color: passed ? AppColors.primaryDark : AppColors.red),
-                  ),
+                PercentBadge(
+                  text: formatPercent(double.parse(best.toStringAsFixed(1))),
+                  tone: passed ? PercentTone.ok : PercentTone.bad,
                 ),
-              const SizedBox(width: 4),
-              Icon(Iconsax.arrow_right_3, color: lock.locked ? AppColors.border : AppColors.textMuted),
+              const SizedBox(width: 6),
+              MahadIcon(MahadIcons.chevronRight, size: 18, color: lock.locked ? c.hair : c.goldText),
             ],
           ),
         ),
