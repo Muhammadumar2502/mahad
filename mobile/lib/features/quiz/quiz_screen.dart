@@ -320,6 +320,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mc;
     final sending = _submit == _SubmitState.sending;
     return PopScope(
       canPop: false,
@@ -332,25 +333,57 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
         }
         if (await _confirmExit() && context.mounted) Navigator.of(context).pop(false);
       },
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const Icon(Iconsax.close_circle),
-            onPressed: sending ? null : () => Navigator.of(context).maybePop(),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+        child: Scaffold(
+          backgroundColor: c.pageFlat,
+          body: DecoratedBox(
+            decoration: BoxDecoration(gradient: c.pageGradient),
+            child: Column(
+              children: [
+                BandBackground(
+                  height: 104,
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 44, 16, 0),
+                    child: SizedBox(
+                      height: 44,
+                      child: Row(
+                        children: [
+                          BandIconButton(
+                            asset: MahadIcons.close,
+                            onPressed: sending ? null : () => Navigator.of(context).maybePop(),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              s.title,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              textAlign: TextAlign.center,
+                              style: AppTheme.display(21, FontWeight.w700, 24, c.bandText),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          if (!s.isFinished)
+                            ValueListenableBuilder<int>(valueListenable: _tick, builder: (_, _, _) => _timerChip())
+                          else
+                            const SizedBox(width: 44),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Expanded(child: s.isFinished ? _submitView() : _quizView()),
+              ],
+            ),
           ),
-          title: Text(s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          actions: [
-            if (!s.isFinished) ValueListenableBuilder<int>(valueListenable: _tick, builder: (_, _, _) => _timerChip()),
-            const SizedBox(width: 12),
-          ],
         ),
-        body: s.isFinished ? _submitView() : _quizView(),
       ),
     );
   }
 
   Widget _submitView() {
+    final c = context.mc;
     switch (_submit) {
       case _SubmitState.idle:
       case _SubmitState.sending:
@@ -364,31 +397,28 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
         return Center(
           child: Padding(
             padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(color: AppColors.orangeSoft, shape: BoxShape.circle),
-                  child: Icon(Iconsax.wifi_square, color: AppColors.orange, size: 34),
-                ),
-                const SizedBox(height: 16),
-                Text(_submitError ?? '', textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
-                const SizedBox(height: 8),
-                Text(
-                  'Javoblaringiz saqlangan. $_retryIn s dan so\'ng avtomatik qayta yuboriladi.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton.icon(onPressed: _send, icon: const Icon(Iconsax.refresh), label: const Text('Hozir yuborish')),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(false),
-                  child: const Text('Keyinroq (fonda yuboriladi)'),
-                ),
-              ],
+            child: FadeSlideIn(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const StarMedallion(icon: Iconsax.wifi_square, tone: MedallionTone.warn),
+                  const SizedBox(height: 18),
+                  Text(_submitError ?? '', textAlign: TextAlign.center, style: AppTheme.body(15.5, FontWeight.w500, 22, c.ink)),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Javoblaringiz saqlangan. $_retryIn s dan so\'ng avtomatik qayta yuboriladi.',
+                    textAlign: TextAlign.center,
+                    style: AppTheme.body(13.5, FontWeight.w400, 20, c.muted),
+                  ),
+                  const SizedBox(height: 22),
+                  MahadButton(onPressed: _send, icon: Iconsax.refresh, label: 'Hozir yuborish'),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Keyinroq (fonda yuboriladi)'),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -396,6 +426,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
   }
 
   Widget _timerChip() {
+    final c = context.mc;
     int? secs;
     var label = '';
     if (s.timing.hasPerQuestion) {
@@ -407,20 +438,26 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
       secs = total;
       label = s.endsByHardDeadline ? 'Muddat' : '';
     }
-    if (secs == null) return const SizedBox.shrink();
+    if (secs == null) return const SizedBox(width: 44);
     final danger = secs <= (s.timing.hasPerQuestion && label == 'Savol' ? 5 : 60);
-    final c = danger ? AppColors.red : AppColors.blue;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(color: danger ? AppColors.redSoft : AppColors.blueSoft, borderRadius: BorderRadius.circular(20)),
+    final fg = danger ? c.badText : c.bandText;
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      decoration: BoxDecoration(
+        color: danger ? c.badSoft : c.bandBtnBg,
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: danger ? c.bad.withValues(alpha: 0.5) : c.bandOrn.withValues(alpha: 0.7)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Iconsax.timer_1, size: 16, color: c),
-          const SizedBox(width: 4),
+          MahadIcon(MahadIcons.hourglass, size: 15, color: danger ? c.bad : c.bandOrn),
+          const SizedBox(width: 6),
           Text(
             '${label.isNotEmpty ? '$label ' : ''}${formatDuration(math.max(0, secs))}',
-            style: TextStyle(fontWeight: FontWeight.w700, color: c, fontFeatures: const [FontFeature.tabularFigures()]),
+            style: AppTheme.body(14, FontWeight.w600, 18, fg).copyWith(fontFeatures: const [FontFeature.tabularFigures()]),
           ),
         ],
       ),
@@ -428,6 +465,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
   }
 
   Widget _quizView() {
+    final c = context.mc;
     final q = s.questions[s.current];
     final answered = s.isAnswered(q);
     final locked = s.isLocked(q);
@@ -438,61 +476,119 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
       children: [
         _progressHeader(),
         if (s.timing.hasPerQuestion)
-          ValueListenableBuilder<int>(
-            valueListenable: _tick,
-            builder: (_, _, _) {
-              final rem = s.questionRemaining(q);
-              final full = s.timing.perQuestionSeconds!;
-              final v = rem == null ? (answered ? 1.0 : 0.0) : (rem / full).clamp(0.0, 1.0);
-              return LinearProgressIndicator(
-                value: v,
-                minHeight: 4,
-                backgroundColor: AppColors.border,
-                color: rem != null && rem <= 5 ? AppColors.red : AppColors.blue,
-              );
-            },
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 0),
+            child: ValueListenableBuilder<int>(
+              valueListenable: _tick,
+              builder: (_, _, _) {
+                final rem = s.questionRemaining(q);
+                final full = s.timing.perQuestionSeconds!;
+                final v = rem == null ? (answered ? 1.0 : 0.0) : (rem / full).clamp(0.0, 1.0);
+                return ClipRRect(
+                  borderRadius: BorderRadius.circular(2),
+                  child: TweenAnimationBuilder<double>(
+                    tween: Tween(end: v),
+                    duration: const Duration(milliseconds: 480),
+                    builder: (_, val, _) => LinearProgressIndicator(
+                      value: val,
+                      minHeight: 4,
+                      backgroundColor: c.progBg,
+                      color: rem != null && rem <= 5 ? c.bad : c.info,
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         Expanded(
           child: ListView(
             controller: _scroll,
-            padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
             children: [
-              Row(
-                children: [
-                  Text(
-                    'Savol ${s.current + 1} / ${s.total}',
-                    style: TextStyle(color: AppColors.blue, fontWeight: FontWeight.w700),
+              AnimatedSwitcher(
+                duration: const Duration(milliseconds: 320),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, a) => FadeTransition(
+                  opacity: a,
+                  child: SlideTransition(
+                    position: Tween<Offset>(begin: const Offset(0.06, 0), end: Offset.zero).animate(a),
+                    child: child,
                   ),
-                  const Spacer(),
-                  if (forced)
-                    Pill(text: "Majburiy o'tish", color: AppColors.orange, background: AppColors.orangeSoft, icon: Iconsax.arrow_right_1),
-                ],
-              ),
-              const SizedBox(height: 10),
-              Text(q.text, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600, height: 1.35)),
-              const SizedBox(height: 18),
-              for (var i = 0; i < q.options.length; i++) _optionTile(q, i),
-              if (locked && !answered)
-                Padding(
-                  padding: EdgeInsets.only(top: 8),
-                  child: Pill(text: 'Vaqt tugadi — javob berilmadi', color: AppColors.red, background: AppColors.redSoft, icon: Iconsax.timer_pause),
                 ),
+                layoutBuilder: (current, previous) => Stack(alignment: Alignment.topCenter, children: [...previous, if (current != null) current]),
+                child: KeyedSubtree(
+                  key: ValueKey(s.current),
+                  child: CornerFrame(
+                    shadow: false,
+                    radius: 12,
+                    padding: const EdgeInsets.fromLTRB(14, 14, 14, 6),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(child: Container(height: 1, margin: const EdgeInsets.only(left: 40), color: c.hair)),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 10),
+                              child: Text(
+                                'Savol ${s.current + 1} / ${s.total}'.toUpperCase(),
+                                style: AppTheme.body(11.5, FontWeight.w700, 16, c.goldText).copyWith(letterSpacing: 2.3),
+                              ),
+                            ),
+                            Expanded(child: Container(height: 1, margin: const EdgeInsets.only(right: 40), color: c.hair)),
+                          ],
+                        ),
+                        if (forced || (locked && !answered)) ...[
+                          const SizedBox(height: 8),
+                          Center(
+                            child: forced && !(locked && !answered)
+                                ? Pill.tone(context, text: "Majburiy o'tish", tone: PillTone.gold, icon: Iconsax.arrow_right_1)
+                                : Pill.tone(context, text: 'Vaqt tugadi — javob berilmadi', tone: PillTone.bad, icon: Iconsax.timer_pause),
+                          ),
+                          if (forced && locked && !answered) ...[
+                            const SizedBox(height: 6),
+                            Center(child: Pill.tone(context, text: "Majburiy o'tish", tone: PillTone.gold, icon: Iconsax.arrow_right_1)),
+                          ],
+                        ],
+                        const SizedBox(height: 12),
+                        Text(q.text, style: AppTheme.body(18.5, FontWeight.w500, 29, c.ink)),
+                        const SizedBox(height: 14),
+                        for (var i = 0; i < q.options.length; i++) _optionTile(q, i),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
-        SafeArea(
-          top: false,
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-            child: Row(
+        DecoratedBox(
+          decoration: BoxDecoration(color: c.navBg),
+          child: SafeArea(
+            top: false,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (!forced && s.current > 0) ...[
-                  Expanded(child: OutlinedButton(onPressed: () => _goTo(s.current - 1), child: const Text('Orqaga'))),
-                  const SizedBox(width: 12),
-                ],
-                Expanded(
-                  flex: 2,
-                  child: ElevatedButton(key: const Key('quiz_next'), onPressed: _next, child: Text(isLast ? 'Yakunlash' : 'Keyingisi')),
+                Container(height: 1, color: c.bandLine),
+                const SizedBox(height: 2),
+                Container(height: 1, color: c.bandLine),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  child: Row(
+                    children: [
+                      if (!forced && s.current > 0) ...[
+                        Expanded(
+                          child: MahadButton(kind: MahadButtonKind.secondary, onPressed: () => _goTo(s.current - 1), label: 'Orqaga'),
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      Expanded(
+                        flex: 2,
+                        child: MahadButton(key: const Key('quiz_next'), onPressed: _next, label: isLast ? 'Yakunlash' : 'Keyingisi'),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -503,55 +599,68 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
   }
 
   Widget _progressHeader() {
+    final c = context.mc;
     final forced = s.timing.forceNext;
-    return Container(
-      color: AppColors.surface,
-      padding: const EdgeInsets.only(bottom: 10),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
       child: Column(
         children: [
-          LinearProgressIndicator(
-            value: s.total == 0 ? 0 : s.answeredCount / s.total,
-            backgroundColor: AppColors.border,
-            color: AppColors.primary,
-            minHeight: 3,
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(2),
+              child: TweenAnimationBuilder<double>(
+                tween: Tween(end: s.total == 0 ? 0 : s.answeredCount / s.total),
+                duration: const Duration(milliseconds: 400),
+                curve: Curves.easeOutCubic,
+                builder: (_, v, _) => LinearProgressIndicator(value: v, backgroundColor: c.progBg, color: c.progFg, minHeight: 3),
+              ),
+            ),
           ),
           SizedBox(
-            height: 46,
+            height: 54,
             child: ListView.builder(
               controller: _grid,
-              padding: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+              padding: const EdgeInsets.fromLTRB(14, 8, 14, 0),
               scrollDirection: Axis.horizontal,
               itemExtent: 44,
               itemCount: s.total,
               itemBuilder: (_, i) {
                 final q = s.questions[i];
                 final cur = i == s.current;
-                Color bg = AppColors.background, fg = AppColors.textMuted;
+                var bg = c.cell, fg = c.cellText;
+                var striped = false;
                 if (s.isAnswered(q)) {
                   if (s.instantFeedback) {
                     final ok = s.answers[q.id] == q.correct;
-                    bg = ok ? AppColors.primarySoft : AppColors.redSoft;
-                    fg = ok ? AppColors.primaryDark : AppColors.red;
+                    bg = ok ? c.okSoft : c.badSoft;
+                    fg = ok ? c.okText : c.badText;
                   } else {
-                    bg = AppColors.primarySoft;
-                    fg = AppColors.primaryDark;
+                    bg = c.goldSoft;
+                    fg = c.goldSoftText;
                   }
                 } else if (s.isLocked(q)) {
-                  bg = AppColors.redSoft;
-                  fg = AppColors.red;
+                  bg = c.badSoft;
+                  fg = c.badText;
+                  striped = true;
                 }
                 return Padding(
                   padding: const EdgeInsets.only(right: 6),
                   child: GestureDetector(
                     onTap: forced ? null : () => _goTo(i),
-                    child: Container(
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 220),
+                      decoration: ShapeDecoration(
                         color: bg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: cur ? AppColors.primary : Colors.transparent, width: 2),
+                        shape: MihrabBorder(side: cur ? BorderSide(color: c.curRing, width: 2) : BorderSide.none),
                       ),
-                      child: Text('${i + 1}', style: TextStyle(color: fg, fontWeight: FontWeight.w700)),
+                      child: CustomPaint(
+                        painter: striped ? _StripePainter(c.bad.withValues(alpha: 0.18)) : null,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Center(child: Text('${i + 1}', style: AppTheme.body(13.5, cur ? FontWeight.w700 : FontWeight.w600, 18, cur ? c.ink : fg))),
+                        ),
+                      ),
                     ),
                   ),
                 );
@@ -564,70 +673,114 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
   }
 
   Widget _optionTile(QuizQuestion q, int i) {
+    final c = context.mc;
     final o = q.options[i];
     final letter = answerLetters[i];
     final selected = s.answers[q.id] == o.original;
     final reveal = s.instantFeedback && (s.isAnswered(q) || s.isLocked(q)) && q.correct.isNotEmpty;
     final isCorrect = o.original == q.correct;
 
-    Color border = AppColors.border, bg = AppColors.surface, badgeBg = AppColors.background, badgeFg = AppColors.textMuted;
-    IconData? icon;
+    var border = c.optBd, bg = c.optBg, badgeBg = c.letterBg, badgeBd = c.letterBd, badgeFg = c.letterText, text = c.ink;
+    var width = 1.0;
+    var bold = false;
+    String? mark;
     if (reveal && isCorrect) {
-      border = AppColors.primary;
-      bg = AppColors.primarySoft;
-      badgeBg = AppColors.primary;
-      badgeFg = Colors.white;
-      icon = Iconsax.tick_circle;
+      border = c.ok;
+      bg = c.okTint;
+      badgeBg = c.ok;
+      badgeBd = c.ok;
+      badgeFg = c.okOn;
+      text = c.okText;
+      mark = MahadIcons.check;
+      width = 1.5;
+      bold = true;
     } else if (reveal && selected) {
-      border = AppColors.red;
-      bg = AppColors.redSoft;
-      badgeBg = AppColors.red;
-      badgeFg = Colors.white;
-      icon = Iconsax.close_circle;
+      border = c.bad;
+      bg = c.badTint;
+      badgeBg = c.bad;
+      badgeBd = c.bad;
+      badgeFg = c.badOn;
+      text = c.badText;
+      mark = MahadIcons.close;
+      width = 1.5;
+      bold = true;
     } else if (selected) {
-      border = AppColors.primary;
-      bg = AppColors.primarySoft;
-      badgeBg = AppColors.primary;
-      badgeFg = Colors.white;
+      border = c.selBd;
+      bg = c.selBg;
+      badgeBg = c.selBadge;
+      badgeBd = c.selBadge;
+      badgeFg = c.selBadgeText;
+      text = c.selText;
+      width = 1.5;
+      bold = true;
     }
 
     return Padding(
       key: Key('quiz_opt_$i'),
       padding: const EdgeInsets.only(bottom: 10),
-      child: Material(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: s.canAnswer(q) ? () => _select(q, o) : null,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(borderRadius: BorderRadius.circular(14), border: Border.all(color: border, width: 1.5)),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(color: badgeBg, borderRadius: BorderRadius.circular(10)),
-                  child: icon != null
-                      ? Icon(icon, color: badgeFg, size: 20)
-                      : Text(letter, style: TextStyle(color: badgeFg, fontWeight: FontWeight.w800)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 5),
-                    child: Text(o.text, style: const TextStyle(fontSize: 15.5, height: 1.3)),
+      child: PressScale(
+        scale: 0.98,
+        enabled: s.canAnswer(q),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(8),
+            onTap: s.canAnswer(q) ? () => _select(q, o) : null,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              constraints: const BoxConstraints(minHeight: 54),
+              padding: const EdgeInsets.fromLTRB(10, 11, 12, 11),
+              decoration: BoxDecoration(color: bg, borderRadius: BorderRadius.circular(8), border: Border.all(color: border, width: width)),
+              child: Row(
+                children: [
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    width: 30,
+                    height: 30,
+                    decoration: ShapeDecoration(color: badgeBg, shape: octagonBorder(30, side: BorderSide(color: badgeBd))),
+                    child: Center(
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 240),
+                        transitionBuilder: (child, a) => ScaleTransition(scale: CurvedAnimation(parent: a, curve: Curves.easeOutBack), child: child),
+                        child: mark != null
+                            ? MahadIcon(mark, key: ValueKey(mark), size: 16, color: badgeFg)
+                            : Text(letter, key: ValueKey(letter), style: AppTheme.display(16, FontWeight.w700, 18, badgeFg)),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(o.text, style: AppTheme.body(15, bold ? FontWeight.w600 : FontWeight.w400, 22, text)),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
+}
+
+/// Diagonal stripes for timed-out question cells.
+class _StripePainter extends CustomPainter {
+  _StripePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+    canvas.clipPath(const MihrabBorder().getOuterPath(Offset.zero & size));
+    final p = Paint()
+      ..color = color
+      ..strokeWidth = 4;
+    for (double x = -size.height; x < size.width; x += 9) {
+      canvas.drawLine(Offset(x, size.height), Offset(x + size.height, 0), p);
+    }
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(_StripePainter old) => old.color != color;
 }
