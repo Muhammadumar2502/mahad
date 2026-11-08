@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,12 @@ import 'package:flutter_svg/flutter_svg.dart';
 import '../core/api_client.dart';
 import '../core/env.dart';
 import '../core/theme.dart';
+import 'mahad_shapes.dart';
+import 'mahad_ui.dart';
+
+export 'mahad_ui.dart' show MIcon, PressScale, FadeSlideIn, MahadSpinner, StarMedallion, MedallionTone, MahadButton, MahadButtonKind, CornerFrame, showMahadDialog;
+export 'mahad_shapes.dart';
+export 'mahad_icons.dart';
 
 /// Future'ni yuklaydi va loading / xato (qayta urinish) / bo'sh / ma'lumot
 /// holatlarini bir xil ko'rsatadi. Pastga tortib yangilash ham bor.
@@ -117,7 +124,7 @@ class AsyncViewState<T> extends State<AsyncView<T>> with WidgetsBindingObserver 
       });
       if (_data != null && !silent) {
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(errorText(e)), backgroundColor: AppColors.red),
+          SnackBar(content: Text(errorText(e)), backgroundColor: context.mc.toastBadBg),
         );
       }
       // Internet yo'q / server javob bermadi — biroz kutib o'zi qayta urinadi.
@@ -140,7 +147,7 @@ class AsyncViewState<T> extends State<AsyncView<T>> with WidgetsBindingObserver 
     final data = _data as T;
     if (widget.isEmpty?.call(data) ?? false) {
       return RefreshIndicator(
-        color: AppColors.primary,
+        color: context.mc.spinner,
         onRefresh: refresh,
         child: ListView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -175,17 +182,15 @@ class LoadingView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: CircularProgressIndicator(strokeWidth: 3.5, color: AppColors.primary),
-          ),
-          const SizedBox(height: 16),
-          Text(text, style: TextStyle(color: AppColors.textMuted)),
-        ],
+      child: FadeSlideIn(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const MahadSpinner(size: 44),
+            const SizedBox(height: 16),
+            Text(text, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.mc.muted)),
+          ],
+        ),
       ),
     );
   }
@@ -202,33 +207,26 @@ class ErrorView extends StatelessWidget {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(color: AppColors.redSoft, shape: BoxShape.circle),
-              child: Icon(Iconsax.wifi_square, color: AppColors.red, size: 34),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 15, color: AppColors.text),
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 20),
-              SizedBox(
-                width: 200,
-                child: ElevatedButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Iconsax.refresh),
-                  label: const Text('Qayta urinish'),
-                ),
+        child: FadeSlideIn(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const StarMedallion(icon: Iconsax.wifi_square, tone: MedallionTone.bad),
+              const SizedBox(height: 18),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 15.5, height: 1.45),
               ),
+              if (onRetry != null) ...[
+                const SizedBox(height: 22),
+                SizedBox(
+                  width: 200,
+                  child: MahadButton(label: 'Qayta urinish', icon: Iconsax.refresh, onPressed: onRetry),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -244,25 +242,24 @@ class EmptyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final text = Theme.of(context).textTheme;
+    final heart = icon == Iconsax.heart || icon == Iconsax.heart_copy;
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 76,
-              height: 76,
-              decoration: BoxDecoration(color: AppColors.primarySoft, shape: BoxShape.circle),
-              child: Icon(icon, color: AppColors.primary, size: 36),
-            ),
-            const SizedBox(height: 16),
-            Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-            if (subtitle != null) ...[
-              const SizedBox(height: 6),
-              Text(subtitle!, textAlign: TextAlign.center, style: TextStyle(color: AppColors.textMuted)),
+        child: FadeSlideIn(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              StarMedallion(icon: icon, tone: heart ? MedallionTone.bad : MedallionTone.soft),
+              const SizedBox(height: 18),
+              Text(title, textAlign: TextAlign.center, style: AppTheme.display(24, FontWeight.w700, 28, context.mc.ink)),
+              if (subtitle != null) ...[
+                const SizedBox(height: 6),
+                Text(subtitle!, textAlign: TextAlign.center, style: text.bodyMedium?.copyWith(color: context.mc.muted, fontSize: 14)),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
@@ -279,18 +276,46 @@ class NetImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mc;
     final url = Env.imageUrl(path);
     final fallback = Container(
-      color: AppColors.primarySoft,
+      color: c.goldSoft,
       alignment: Alignment.center,
-      child: Icon(fallbackIcon, color: AppColors.primary, size: 40),
+      child: MIcon(fallbackIcon, color: c.icon, size: 40),
     );
     if (url == null) return fallback;
     return CachedNetworkImage(
       imageUrl: url,
       fit: fit,
-      placeholder: (_, _) => Container(color: const Color(0xFFF0F1F3)),
+      fadeInDuration: const Duration(milliseconds: 250),
+      placeholder: (_, _) => Container(color: c.card2),
       errorWidget: (_, _, _) => fallback,
+    );
+  }
+}
+
+/// Mihrab-arch image plate (subject: dark green plate, book: parchment `imgPlate`).
+class ArchPlate extends StatelessWidget {
+  const ArchPlate({super.key, required this.child, this.width = 96, this.height = 116, this.color, this.padding = 6});
+
+  final Widget child;
+  final double width;
+  final double height;
+  final Color? color;
+  final double padding;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mc;
+    return Container(
+      width: width,
+      height: height,
+      decoration: ShapeDecoration(
+        color: color ?? c.imgPlate,
+        shape: MihrabBorder(side: BorderSide(color: c.frame)),
+      ),
+      padding: EdgeInsets.fromLTRB(padding, height * 0.2, padding, padding),
+      child: child,
     );
   }
 }
@@ -311,8 +336,25 @@ class SvgIcon extends StatelessWidget {
   );
 }
 
+enum PillTone { ok, bad, warn, info, pur, grey, gold }
+
 class Pill extends StatelessWidget {
   const Pill({super.key, required this.text, required this.color, required this.background, this.icon});
+
+  /// Tone pill from the design system (soft background + strong text).
+  factory Pill.tone(BuildContext context, {Key? key, required String text, required PillTone tone, IconData? icon}) {
+    final c = context.mc;
+    final (fg, bg) = switch (tone) {
+      PillTone.ok => (c.okText, c.okSoft),
+      PillTone.bad => (c.badText, c.badSoft),
+      PillTone.warn => (c.warnText, c.warnSoft),
+      PillTone.info => (c.infoText, c.infoSoft),
+      PillTone.pur => (c.purText, c.purSoft),
+      PillTone.grey => (c.greyText, c.greySoft),
+      PillTone.gold => (c.goldSoftText, c.goldSoft),
+    };
+    return Pill(key: key, text: text, color: fg, background: bg, icon: icon);
+  }
 
   final String text;
   final Color color;
@@ -323,28 +365,75 @@ class Pill extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(20)),
+      decoration: BoxDecoration(color: background, borderRadius: BorderRadius.circular(999)),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          if (icon != null) ...[Icon(icon, size: 14, color: color), const SizedBox(width: 4)],
-          Text(text, style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+          if (icon != null) ...[MIcon(icon!, size: 13, color: color), const SizedBox(width: 5)],
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: AppTheme.body(12, FontWeight.w600, 16, color),
+            ),
+          ),
         ],
       ),
     );
   }
 }
 
-/// Foiz bo'yicha rang.
-Color percentColor(double p, {int pass = 60}) {
-  if (p >= pass) return AppColors.primary;
-  if (p >= pass / 2) return AppColors.orange;
-  return AppColors.red;
+/// Octagon-bevel percent badge (soft in lists, [solid] for rating / results).
+class PercentBadge extends StatelessWidget {
+  const PercentBadge({super.key, required this.text, required this.tone, this.solid = false});
+
+  final String text;
+  final PercentTone tone;
+  final bool solid;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mc;
+    final (fg, bg) = switch ((tone, solid)) {
+      (PercentTone.ok, false) => (c.okText, c.okSoft),
+      (PercentTone.warn, false) => (c.warnText, c.warnSoft),
+      (PercentTone.bad, false) => (c.badText, c.badSoft),
+      (PercentTone.ok, true) => (c.okSolidOn, c.okSolid),
+      (PercentTone.warn, true) => (c.warnSolidOn, c.warnSolid),
+      (PercentTone.bad, true) => (c.badSolidOn, c.badSolid),
+    };
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+      decoration: ShapeDecoration(color: bg, shape: BeveledRectangleBorder(borderRadius: BorderRadius.circular(6))),
+      child: Text(text, style: AppTheme.body(12.5, FontWeight.w700, 16, fg)),
+    );
+  }
 }
+
+enum PercentTone { ok, warn, bad }
+
+/// Foiz bo'yicha ton (rang qoidasi o'zgarmagan).
+PercentTone percentTone(double p, {int pass = 60}) {
+  if (p >= pass) return PercentTone.ok;
+  if (p >= pass / 2) return PercentTone.warn;
+  return PercentTone.bad;
+}
+
+MahadColors get _mc => ThemeController.instance.isDark ? MahadColors.tun : MahadColors.kun;
+
+/// Foiz bo'yicha rang.
+Color percentColor(double p, {int pass = 60}) => switch (percentTone(p, pass: pass)) {
+  PercentTone.ok => _mc.ok,
+  PercentTone.warn => _mc.warn,
+  PercentTone.bad => _mc.bad,
+};
 
 String formatPercent(double p) =>
     p == p.roundToDouble() ? '${p.toInt()}%' : '${p.toStringAsFixed(1)}%';
 
+/// Result medallion: eight-pointed star with an animated gradient ring and the percent.
+/// [size] is the ring area; the star frame is 1.4× larger (150 → 210).
 class PercentRing extends StatelessWidget {
   const PercentRing({super.key, required this.percent, this.size = 52, this.pass = 60, this.stroke = 5});
 
@@ -355,34 +444,78 @@ class PercentRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final c = percentColor(percent, pass: pass);
+    final c = context.mc;
+    final tone = percentTone(percent, pass: pass);
+    final (a, b, fg) = switch (tone) {
+      PercentTone.ok => (c.ringOkStart, c.ringOkEnd, c.okText),
+      PercentTone.warn => (c.ringWarnStart, c.ringWarnEnd, c.warnText),
+      PercentTone.bad => (c.ringBadStart, c.ringBadEnd, c.badText),
+    };
+    final box = size * 1.4;
+    final value = (percent / 100).clamp(0.0, 1.0);
     return SizedBox(
-      width: size,
-      height: size,
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          SizedBox(
-            width: size,
-            height: size,
-            child: CircularProgressIndicator(
-              value: (percent / 100).clamp(0, 1),
-              strokeWidth: stroke,
-              backgroundColor: AppColors.border,
-              color: c,
-              strokeCap: StrokeCap.round,
+      width: box,
+      height: box,
+      child: TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: value),
+        duration: const Duration(milliseconds: 1100),
+        curve: Curves.easeOutCubic,
+        builder: (_, v, _) => CustomPaint(
+          painter: _MedallionPainter(value: v, fill: c.card, line: c.gold, track: c.track, start: a, end: b, ringScale: box / 210),
+          child: Center(
+            child: Text(
+              '${(v * 100).round()}%',
+              style: AppTheme.display(44 * box / 210, FontWeight.w700, 48 * box / 210, fg),
             ),
           ),
-          Text(
-            '${percent.round()}%',
-            style: TextStyle(fontSize: size * 0.24, fontWeight: FontWeight.w700, color: c),
-          ),
-        ],
+        ),
       ),
     );
   }
 }
 
+class _MedallionPainter extends CustomPainter {
+  _MedallionPainter({required this.value, required this.fill, required this.line, required this.track, required this.start, required this.end, required this.ringScale});
+
+  final double value;
+  final Color fill, line, track, start, end;
+  final double ringScale;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final r = (Offset.zero & size).deflate(1.5);
+    final star = octagramPath(r);
+    canvas.drawShadow(star, Colors.black.withValues(alpha: 0.35), 10, false);
+    canvas.drawPath(star, Paint()..color = fill);
+    canvas.drawPath(star, Paint()
+      ..color = line
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5);
+    canvas.drawPath(octagramPath(r.deflate(size.shortestSide * 0.06)), Paint()
+      ..color = line.withValues(alpha: 0.45)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 0.8);
+    final ringR = 64 * ringScale;
+    final sw = 10 * ringScale;
+    final rr = Rect.fromCircle(center: r.center, radius: ringR);
+    canvas.drawArc(rr, 0, math.pi * 2, false, Paint()
+      ..color = track
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = sw);
+    if (value > 0) {
+      canvas.drawArc(rr, -math.pi / 2, math.pi * 2 * value, false, Paint()
+        ..shader = SweepGradient(startAngle: -math.pi / 2, endAngle: math.pi * 1.5, colors: [start, end], transform: const GradientRotation(-math.pi / 2)).createShader(rr)
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeWidth = sw);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_MedallionPainter old) => old.value != value || old.fill != fill || old.start != start;
+}
+
+/// Two-button confirmation in the framed dialog (texts and return value unchanged).
 Future<bool> confirmDialog(
   BuildContext context, {
   required String title,
@@ -391,17 +524,19 @@ Future<bool> confirmDialog(
   String cancel = 'Bekor qilish',
   bool danger = false,
 }) async {
-  final r = await showDialog<bool>(
-    context: context,
-    builder: (ctx) => AlertDialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(title),
-      content: Text(message),
+  final r = await showMahadDialog<bool>(
+    context,
+    useRootNavigator: false,
+    builder: (ctx) => MahadDialog(
+      title: title,
+      message: message,
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(cancel)),
-        TextButton(
+        MahadButton(label: cancel, kind: MahadButtonKind.secondary, height: 44, onPressed: () => Navigator.pop(ctx, false)),
+        MahadButton(
+          label: confirm,
+          kind: danger ? MahadButtonKind.dangerFilled : MahadButtonKind.primary,
+          height: 44,
           onPressed: () => Navigator.pop(ctx, true),
-          child: Text(confirm, style: TextStyle(color: danger ? AppColors.red : AppColors.primary, fontWeight: FontWeight.w700)),
         ),
       ],
     ),
@@ -409,21 +544,94 @@ Future<bool> confirmDialog(
   return r ?? false;
 }
 
+/// One-button information dialog ("Tushunarli" / "Yopish"), optional octagon icon.
+Future<void> infoDialog(BuildContext context, {required String title, required String message, String button = 'Tushunarli', IconData? icon}) {
+  return showMahadDialog<void>(
+    context,
+    useRootNavigator: false,
+    builder: (ctx) => MahadDialog(
+      title: title,
+      message: message,
+      icon: icon,
+      actions: [MahadButton(label: button, height: 44, onPressed: () => Navigator.pop(ctx))],
+    ),
+  );
+}
+
+/// Framed dialog body: optional 60px octagon icon (centred layout), Cormorant title, message,
+/// equal-width buttons.
+class MahadDialog extends StatelessWidget {
+  const MahadDialog({super.key, required this.title, required this.message, required this.actions, this.icon, this.content});
+
+  final String title;
+  final String message;
+  final List<Widget> actions;
+  final IconData? icon;
+  final Widget? content;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = context.mc;
+    final centred = icon != null;
+    final align = centred ? CrossAxisAlignment.center : CrossAxisAlignment.start;
+    final textAlign = centred ? TextAlign.center : TextAlign.start;
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 28),
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Material(
+            type: MaterialType.transparency,
+            child: CornerFrame(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: align,
+                children: [
+                  if (icon != null) ...[
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: ShapeDecoration(color: c.card2, shape: octagonBorder(60, side: BorderSide(color: c.frame))),
+                      child: Center(child: MIcon(icon!, size: 26, color: c.icon)),
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+                  Text(title, textAlign: textAlign, style: AppTheme.display(25, FontWeight.w700, 30, c.ink)),
+                  const SizedBox(height: 10),
+                  Text(message, textAlign: textAlign, style: AppTheme.body(14.5, FontWeight.w400, 22, c.ink)),
+                  if (content != null) ...[const SizedBox(height: 12), content!],
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      for (var i = 0; i < actions.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        Expanded(child: actions[i]),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 /// Bloklovchi yuklanish oynasi. `await` qilinadigan amal tugaguncha turadi.
 Future<T> withLoading<T>(BuildContext context, Future<T> Function() task) async {
   final nav = Navigator.of(context, rootNavigator: true);
-  showDialog<void>(
-    context: context,
-    barrierDismissible: false,
-    useRootNavigator: true,
-    builder: (_) => PopScope(
+  showMahadDialog<void>(
+    context,
+    dismissible: false,
+    builder: (_) => const PopScope(
       canPop: false,
       child: Center(
-        child: Card(
-          child: Padding(
-            padding: EdgeInsets.all(24),
-            child: CircularProgressIndicator(color: AppColors.primary),
-          ),
+        child: SizedBox(
+          width: 96,
+          height: 96,
+          child: CornerFrame(padding: EdgeInsets.zero, child: Center(child: MahadSpinner(size: 40))),
         ),
       ),
     ),

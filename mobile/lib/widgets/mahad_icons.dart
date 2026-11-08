@@ -51,6 +51,7 @@ class MahadIcons {
   static const medal = '${_p}medal.svg'; // medal_star_copy
   static const bookSmall = '${_p}book_small.svg'; // book
   static const info = '${_p}info.svg'; // info_circle
+  static const danger = '${_p}danger.svg'; // danger
   static const star = '${_p}star_fill.svg'; // star_1 (filled octagram)
   static const starOutline = '${_p}star_outline.svg'; // star
   static const starMedallion = '${_p}star_medallion.svg'; // Maxsus tile icon

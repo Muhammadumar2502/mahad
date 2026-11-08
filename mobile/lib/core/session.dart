@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../data/models.dart';
 import '../data/repository.dart';
+import '../widgets/mahad_ui.dart';
 import 'storage.dart';
+import 'theme.dart';
 
 /// Joriy foydalanuvchi, guruh sozlamalari va global navigatsiya.
 class Session {
@@ -48,6 +50,8 @@ class Session {
     await Storage.clearSession(keepQuizzes: expired);
   }
 
+  static MahadColors get _c => ThemeController.instance.isDark ? MahadColors.tun : MahadColors.kun;
+
   static void toast(String message, {bool error = false}) {
     final m = messengerKey.currentState;
     if (m == null) return;
@@ -55,8 +59,26 @@ class Session {
       ..hideCurrentSnackBar()
       ..showSnackBar(
         SnackBar(
-          content: Text(message),
-          backgroundColor: error ? const Color(0xFFE5484D) : const Color(0xFF2F8F55),
+          content: Row(
+            children: [
+              StarMedallion(
+                size: 26,
+                tone: error ? MedallionTone.bad : MedallionTone.gold,
+                child: Text(
+                  error ? '!' : '✓',
+                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: error ? _c.bad : _c.goldText),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: AppTheme.body(14, FontWeight.w600, 20, error ? _c.toastBadText : _c.toastOkText),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: error ? _c.toastBadBg : _c.toastOkBg,
           duration: Duration(seconds: error ? 4 : 2),
         ),
       );
