@@ -8,6 +8,7 @@ import 'package:flutter_svg/flutter_svg.dart';
 
 import '../core/api_client.dart';
 import '../core/env.dart';
+import '../core/session.dart';
 import '../core/theme.dart';
 import 'mahad_icons.dart';
 import 'mahad_shapes.dart';
@@ -126,7 +127,7 @@ class AsyncViewState<T> extends State<AsyncView<T>> with WidgetsBindingObserver 
       });
       if (_data != null && !silent) {
         ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-          SnackBar(content: Text(errorText(e)), backgroundColor: context.mc.toastBadBg),
+          Session.snackBar(errorText(e), error: true),
         );
       }
       // Internet yo'q / server javob bermadi — biroz kutib o'zi qayta urinadi.

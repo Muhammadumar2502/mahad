@@ -57,7 +57,11 @@ class Session {
     if (m == null) return;
     m
       ..hideCurrentSnackBar()
-      ..showSnackBar(
+      ..showSnackBar(snackBar(message, error: error, duration: Duration(seconds: error ? 4 : 2)));
+  }
+
+  /// Redesigned SnackBar (octagram mark, toast tokens). Callers keep their own messenger and duration.
+  static SnackBar snackBar(String message, {bool error = false, Duration duration = const Duration(seconds: 4)}) =>
         SnackBar(
           content: Row(
             children: [
@@ -79,8 +83,6 @@ class Session {
             ],
           ),
           backgroundColor: error ? _c.toastBadBg : _c.toastOkBg,
-          duration: Duration(seconds: error ? 4 : 2),
-        ),
-      );
-  }
+          duration: duration,
+        );
 }

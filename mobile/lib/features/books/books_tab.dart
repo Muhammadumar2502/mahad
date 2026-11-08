@@ -45,6 +45,7 @@ class _BooksTabState extends State<BooksTab> {
                 controller: _search,
                 hint: 'Kitob qidirish',
                 onChanged: (_) => setState(() {}),
+                onClear: () => setState(_search.clear),
               ),
             ),
             onTap: (b) => openBook(context, b, () => BookScreen(book: b)),

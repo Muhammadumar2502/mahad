@@ -7,6 +7,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 
 import '../../core/api_client.dart';
 import '../../core/clock.dart';
+import '../../core/session.dart';
 import '../../core/theme.dart';
 import '../../data/models.dart';
 import '../../widgets/common.dart';
@@ -313,7 +314,7 @@ class _QuizScreenState extends State<QuizScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(content: Text(m), duration: const Duration(seconds: 2)));
+      ..showSnackBar(Session.snackBar(m, duration: const Duration(seconds: 2)));
   }
 
   // =================== UI ===================
