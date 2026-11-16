@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import '../../core/device.dart';
 import '../../core/theme.dart';
+import '../../widgets/common.dart';
 import 'splash_screen.dart';
 
 /// Ilova versiyasi backend talab qilganidan past bo'lsa ko'rsatiladi.
@@ -15,75 +16,71 @@ class UpdateScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final c = context.mc;
     return PopScope(
       canPop: false,
-      child: Scaffold(
-        body: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFF245B36), Color(0xFF1B3F28)],
-            ),
-          ),
-          child: SafeArea(
-            child: Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(28),
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(24)),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Container(
-                        width: 92,
-                        height: 92,
-                        decoration: const BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: LinearGradient(colors: [Color(0xFF43A85E), Color(0xFF6CC27E)]),
-                        ),
-                        child: const Icon(Iconsax.import_1, color: Colors.white, size: 46),
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+        child: Scaffold(
+          backgroundColor: c.bandEnd,
+          body: BandBackground(
+            height: MediaQuery.of(context).size.height,
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(28),
+                  child: FadeSlideIn(
+                    child: CornerFrame(
+                      padding: const EdgeInsets.fromLTRB(22, 26, 22, 14),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            width: 84,
+                            height: 84,
+                            decoration: ShapeDecoration(
+                              gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: [c.bandStart, c.bandEnd]),
+                              shape: octagonBorder(84, side: BorderSide(color: c.gold.withValues(alpha: 0.7))),
+                            ),
+                            child: Center(child: MIcon(Iconsax.import_1, color: c.bandText, size: 34)),
+                          ),
+                          const SizedBox(height: 18),
+                          Text('Yangilanish mavjud!', textAlign: TextAlign.center, style: AppTheme.display(28, FontWeight.w700, 32, c.ink)),
+                          const SizedBox(height: 10),
+                          Text(
+                            message ?? 'Ilovaning yangi versiyasi mavjud. Davom etish uchun yangilang.',
+                            textAlign: TextAlign.center,
+                            style: AppTheme.body(14.5, FontWeight.w400, 22, c.muted),
+                          ),
+                          const SizedBox(height: 18),
+                          DoubleFrame(
+                            color: c.card2,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+                            child: Row(
+                              children: [
+                                Expanded(child: _ver(context, 'Joriy versiya', DeviceData.appVersion, c.ink)),
+                                MahadIcon(MahadIcons.arrowRight, size: 20, color: c.icon),
+                                Expanded(child: _ver(context, 'Yangi versiya', requiredVersion ?? '—', c.okText)),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          MahadButton(
+                            onPressed: () => SystemNavigator.pop(),
+                            icon: Iconsax.import,
+                            label: 'Ilovani yopish',
+                          ),
+                          const SizedBox(height: 6),
+                          TextButton(
+                            onPressed: () => Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (_) => const SplashScreen()),
+                              (_) => false,
+                            ),
+                            child: const Text('Qayta tekshirish'),
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 20),
-                      const Text('Yangilanish mavjud!', style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700)),
-                      const SizedBox(height: 10),
-                      Text(
-                        message ?? 'Ilovaning yangi versiyasi mavjud. Davom etish uchun yangilang.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: AppColors.textMuted, fontSize: 15, height: 1.4),
-                      ),
-                      const SizedBox(height: 20),
-                      Container(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F8F8),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Row(
-                          children: [
-                            Expanded(child: _ver('Joriy versiya', DeviceData.appVersion, AppColors.text)),
-                            const Icon(Iconsax.arrow_right_1, color: AppColors.primary),
-                            Expanded(child: _ver('Yangi versiya', requiredVersion ?? '—', AppColors.primary)),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 22),
-                      ElevatedButton.icon(
-                        onPressed: () => SystemNavigator.pop(),
-                        icon: const Icon(Iconsax.import),
-                        label: const Text('Ilovani yopish'),
-                      ),
-                      const SizedBox(height: 6),
-                      TextButton(
-                        onPressed: () => Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(builder: (_) => const SplashScreen()),
-                          (_) => false,
-                        ),
-                        child: const Text('Qayta tekshirish'),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
@@ -94,11 +91,14 @@ class UpdateScreen extends StatelessWidget {
     );
   }
 
-  Widget _ver(String label, String value, Color color) => Column(
-    children: [
-      Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 13)),
-      const SizedBox(height: 4),
-      Text(value, style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: color)),
-    ],
-  );
+  Widget _ver(BuildContext context, String label, String value, Color color) {
+    final c = context.mc;
+    return Column(
+      children: [
+        Text(label, style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted)),
+        const SizedBox(height: 4),
+        Text(value, style: AppTheme.display(24, FontWeight.w700, 28, color)),
+      ],
+    );
+  }
 }

@@ -57,24 +57,35 @@ class _MahadAppState extends State<MahadApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mahad Test',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.light,
-      navigatorKey: Session.navigatorKey,
-      scaffoldMessengerKey: Session.messengerKey,
-      // Juda katta tizim shriftida ham layout buzilmasin.
-      builder: (context, child) {
-        final mq = MediaQuery.of(context);
-        return MediaQuery(
-          data: mq.copyWith(textScaler: mq.textScaler.clamp(minScaleFactor: 0.9, maxScaleFactor: 1.25)),
-          child: GestureDetector(
-            onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-            child: child,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: ThemeController.instance,
+      builder:
+          (context, mode, _) => MaterialApp(
+            title: 'Mahad Test',
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.kun,
+            darkTheme: AppTheme.tun,
+            themeMode: mode,
+            navigatorKey: Session.navigatorKey,
+            scaffoldMessengerKey: Session.messengerKey,
+            // Juda katta tizim shriftida ham layout buzilmasin.
+            builder: (context, child) {
+              final mq = MediaQuery.of(context);
+              return MediaQuery(
+                data: mq.copyWith(
+                  textScaler: mq.textScaler.clamp(
+                    minScaleFactor: 0.9,
+                    maxScaleFactor: 1.25,
+                  ),
+                ),
+                child: GestureDetector(
+                  onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+                  child: child,
+                ),
+              );
+            },
+            home: const SplashScreen(),
           ),
-        );
-      },
-      home: const SplashScreen(),
     );
   }
 }

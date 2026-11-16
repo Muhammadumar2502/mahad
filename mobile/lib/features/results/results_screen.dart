@@ -62,8 +62,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Mening natijalarim')),
+    return BandPage(
+      title: 'Mening natijalarim',
       body: AsyncView<List<ResultRecord>>(
         key: _view,
         load: Repo.results,
@@ -76,37 +76,37 @@ class _ResultsScreenState extends State<ResultsScreen> {
           final list = _apply(all);
           int count(ResultKind k) => all.where((r) => r.kind == k).length;
           return RefreshIndicator(
-            color: AppColors.primary,
+            color: context.mc.spinner,
             onRefresh: refresh,
             child: CustomScrollView(
               physics: const AlwaysScrollableScrollPhysics(),
               slivers: [
-                SliverToBoxAdapter(child: _summary(list)),
+                SliverToBoxAdapter(child: FadeSlideIn(child: _summary(list))),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 44,
+                    height: 46,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       children: [
-                        _chip('Hammasi (${all.length})', _kind == _Kind.all, () => setState(() => _kind = _Kind.all)),
-                        _chip('Kitob (${count(ResultKind.book)})', _kind == _Kind.book, () => setState(() => _kind = _Kind.book)),
-                        _chip('Aralash (${count(ResultKind.random)})', _kind == _Kind.random, () => setState(() => _kind = _Kind.random)),
-                        _chip('Maxsus (${count(ResultKind.special)})', _kind == _Kind.special, () => setState(() => _kind = _Kind.special)),
+                        MahadChip(label: 'Hammasi (${all.length})', selected: _kind == _Kind.all, onTap: () => setState(() => _kind = _Kind.all)),
+                        MahadChip(label: 'Kitob (${count(ResultKind.book)})', selected: _kind == _Kind.book, onTap: () => setState(() => _kind = _Kind.book)),
+                        MahadChip(label: 'Aralash (${count(ResultKind.random)})', selected: _kind == _Kind.random, onTap: () => setState(() => _kind = _Kind.random)),
+                        MahadChip(label: 'Maxsus (${count(ResultKind.special)})', selected: _kind == _Kind.special, onTap: () => setState(() => _kind = _Kind.special)),
                       ],
                     ),
                   ),
                 ),
                 SliverToBoxAdapter(
                   child: SizedBox(
-                    height: 44,
+                    height: 42,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       children: [
-                        _chip('Barcha vaqt', _period == _Period.all, () => setState(() => _period = _Period.all), small: true),
-                        _chip('7 kun', _period == _Period.week, () => setState(() => _period = _Period.week), small: true),
-                        _chip('30 kun', _period == _Period.month, () => setState(() => _period = _Period.month), small: true),
+                        MahadChip(label: 'Barcha vaqt', selected: _period == _Period.all, onTap: () => setState(() => _period = _Period.all), small: true),
+                        MahadChip(label: '7 kun', selected: _period == _Period.week, onTap: () => setState(() => _period = _Period.week), small: true),
+                        MahadChip(label: '30 kun', selected: _period == _Period.month, onTap: () => setState(() => _period = _Period.month), small: true),
                       ],
                     ),
                   ),
@@ -121,8 +121,8 @@ class _ResultsScreenState extends State<ResultsScreen> {
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                     sliver: SliverList.separated(
                       itemCount: list.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
-                      itemBuilder: (_, i) => _ResultTile(r: list[i]),
+                      separatorBuilder: (_, _) => const SizedBox(height: 10),
+                      itemBuilder: (_, i) => FadeSlideIn(index: i, child: _ResultTile(r: list[i])),
                     ),
                   ),
               ],
@@ -134,27 +134,33 @@ class _ResultsScreenState extends State<ResultsScreen> {
   }
 
   Widget _summary(List<ResultRecord> list) {
+    final c = context.mc;
     final valid = list.where((r) => r.total > 0).toList();
     final avg = valid.isEmpty ? 0.0 : valid.map((r) => r.percent).reduce((a, b) => a + b) / valid.length;
     final best = valid.isEmpty ? 0.0 : valid.map((r) => r.percent).reduce((a, b) => a > b ? a : b);
-    Widget cell(String label, String value, Color c) => Expanded(
-      child: Column(
-        children: [
-          Text(value, style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: c)),
-          const SizedBox(height: 2),
-          Text(label, style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
-        ],
+    Widget cell(String label, String value, Color col) => Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        child: Column(
+          children: [
+            Text(value, style: AppTheme.display(28, FontWeight.w700, 32, col)),
+            const SizedBox(height: 2),
+            Text(label, style: AppTheme.body(12, FontWeight.w500, 16, c.muted)),
+          ],
+        ),
       ),
     );
     return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-      child: Card(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 14),
+      padding: const EdgeInsets.fromLTRB(16, 14, 16, 8),
+      child: DoubleFrame(
+        padding: EdgeInsets.zero,
+        child: IntrinsicHeight(
           child: Row(
             children: [
-              cell('Urinish', '${list.length}', AppColors.blue),
+              cell('Urinish', '${list.length}', c.info),
+              VerticalDivider(width: 1, color: c.hair),
               cell("O'rtacha", formatPercent(double.parse(avg.toStringAsFixed(1))), percentColor(avg)),
+              VerticalDivider(width: 1, color: c.hair),
               cell('Eng yaxshi', formatPercent(double.parse(best.toStringAsFixed(1))), percentColor(best)),
             ],
           ),
@@ -162,19 +168,6 @@ class _ResultsScreenState extends State<ResultsScreen> {
       ),
     );
   }
-
-  Widget _chip(String label, bool selected, VoidCallback onTap, {bool small = false}) => Padding(
-    padding: const EdgeInsets.only(right: 8, top: 4, bottom: 4),
-    child: ChoiceChip(
-      label: Text(label, style: TextStyle(fontSize: small ? 12.5 : 13.5)),
-      selected: selected,
-      showCheckmark: false,
-      selectedColor: AppColors.primarySoft,
-      labelStyle: TextStyle(color: selected ? AppColors.primaryDark : AppColors.text, fontWeight: selected ? FontWeight.w600 : FontWeight.w400),
-      side: BorderSide(color: selected ? AppColors.primary : AppColors.border),
-      onSelected: (_) => onTap(),
-    ),
-  );
 }
 
 class _ResultTile extends StatelessWidget {
@@ -184,94 +177,92 @@ class _ResultTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (List<Color> grad, IconData icon, String? tag, Color tagColor) = switch (r.kind) {
-      ResultKind.special => (const [Color(0xFF9C27B0), Color(0xFFBA68C8)], Iconsax.star_1, 'MAXSUS TEST', const Color(0xFF9C27B0)),
-      ResultKind.random => (const [Color(0xFFFF9A3C), Color(0xFFFFB25E)], Iconsax.shuffle, 'ARALASH TEST', AppColors.orange),
-      ResultKind.book => (const [Color(0xFF4CAF6E), Color(0xFF7CC896)], Iconsax.book_1, null, AppColors.primary),
+    final c = context.mc;
+    final (List<Color> grad, IconData icon, String? tag, Color tagColor, Color tagBg) = switch (r.kind) {
+      ResultKind.special => ([c.iconSpecialStart, c.iconSpecialEnd], Iconsax.star_1, 'MAXSUS TEST', c.purText, c.purSoft),
+      ResultKind.random => ([c.iconMixStart, c.iconMixEnd], Iconsax.shuffle, 'ARALASH TEST', c.warnText, c.warnSoft),
+      ResultKind.book => ([c.iconBookStart, c.iconBookEnd], Iconsax.book_1, null, c.okText, c.okSoft),
     };
     final good = r.percent >= 60;
-    final scoreColor = good ? AppColors.primary : AppColors.red;
+    final scoreColor = good ? c.ok : c.bad;
 
-    return Material(
-      color: AppColors.surface,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () {
-          final data = ReviewData.fromRecord(r);
-          if (data == null) {
-            Session.toast("Bu natija uchun batafsil javoblar saqlanmagan");
-            return;
-          }
-          Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(title: r.title, data: data)));
-        },
-        child: Container(
-          padding: const EdgeInsets.all(14),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: scoreColor.withValues(alpha: 0.45)),
-          ),
-          child: Row(
-            children: [
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: grad),
-                  borderRadius: BorderRadius.circular(14),
-                  boxShadow: [BoxShadow(color: grad.first.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 3))],
+    return PressScale(
+      scale: 0.98,
+      child: Material(
+        color: c.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12), side: BorderSide(color: scoreColor.withValues(alpha: 0.45))),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () {
+            final data = ReviewData.fromRecord(r);
+            if (data == null) {
+              Session.toast("Bu natija uchun batafsil javoblar saqlanmagan");
+              return;
+            }
+            Navigator.push(context, MaterialPageRoute(builder: (_) => ReviewScreen(title: r.title, data: data)));
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 58,
+                  decoration: ShapeDecoration(
+                    gradient: LinearGradient(begin: Alignment.topCenter, end: Alignment.bottomCenter, colors: grad),
+                    shape: MihrabBorder(side: BorderSide(color: c.gold.withValues(alpha: 0.6))),
+                  ),
+                  padding: const EdgeInsets.only(top: 12),
+                  child: Center(child: MIcon(icon, color: c.icOn, size: 22)),
                 ),
-                child: Icon(icon, color: Colors.white, size: 28),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    if (tag != null) ...[
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(color: tagColor.withValues(alpha: 0.12), borderRadius: BorderRadius.circular(6)),
-                        child: Text(tag, style: TextStyle(color: tagColor, fontSize: 11, fontWeight: FontWeight.w700)),
-                      ),
-                      const SizedBox(height: 4),
-                    ],
-                    Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        if (r.subtitle != null && r.kind == ResultKind.book) ...[
-                          const Icon(Iconsax.book, size: 14, color: AppColors.textMuted),
-                          const SizedBox(width: 3),
-                          Flexible(
-                            child: Text(r.subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
-                          ),
-                        ] else ...[
-                          const Icon(Iconsax.message_question, size: 14, color: AppColors.textMuted),
-                          const SizedBox(width: 3),
-                          Text('${r.total} savol', style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
-                        ],
-                        const SizedBox(width: 10),
-                        const Icon(Iconsax.calendar_1, size: 13, color: AppColors.textMuted),
-                        const SizedBox(width: 3),
-                        Text(_short(r.date), style: const TextStyle(color: AppColors.textMuted, fontSize: 12.5)),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (tag != null) ...[
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(color: tagBg, borderRadius: BorderRadius.circular(999)),
+                          child: Text(tag, style: AppTheme.body(10.5, FontWeight.w700, 14, tagColor).copyWith(letterSpacing: 1.2)),
+                        ),
+                        const SizedBox(height: 4),
                       ],
-                    ),
+                      Text(r.title, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTheme.display(21, FontWeight.w700, 25, c.ink)),
+                      const SizedBox(height: 3),
+                      Row(
+                        children: [
+                          if (r.subtitle != null && r.kind == ResultKind.book) ...[
+                            MIcon(Iconsax.book, size: 14, color: c.muted),
+                            const SizedBox(width: 4),
+                            Flexible(
+                              child: Text(r.subtitle!, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted)),
+                            ),
+                          ] else ...[
+                            MIcon(Iconsax.message_question, size: 14, color: c.muted),
+                            const SizedBox(width: 4),
+                            Text('${r.total} savol', style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted)),
+                          ],
+                          const SizedBox(width: 10),
+                          MIcon(Iconsax.calendar_1, size: 13, color: c.muted),
+                          const SizedBox(width: 4),
+                          Text(_short(r.date), style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted)),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    PercentBadge(text: '${r.solved}/${r.total}', tone: good ? PercentTone.ok : PercentTone.bad, solid: true),
+                    const SizedBox(height: 6),
+                    MahadIcon(MahadIcons.chevronRight, size: 18, color: c.goldText),
                   ],
                 ),
-              ),
-              const SizedBox(width: 8),
-              Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(color: scoreColor, borderRadius: BorderRadius.circular(8)),
-                    child: Text('${r.solved}/${r.total}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
-                  ),
-                  const Icon(Iconsax.arrow_right_3, color: AppColors.primary),
-                ],
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

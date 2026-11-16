@@ -31,40 +31,39 @@ class _SubjectBooksScreenState extends State<SubjectBooksScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.subject.name),
-        actions: [
-          IconButton(
-            tooltip: 'Aralash test',
-            icon: const Icon(Iconsax.shuffle, color: AppColors.primary),
-            onPressed: () {
-              final open = _books.where((b) => !b.fullBlock && b.sections.isNotEmpty).toList();
-              if (open.isEmpty) {
-                Session.toast("Aralash test uchun ochiq kitob yo'q", error: true);
-                return;
-              }
-              showModalBottomSheet<void>(
-                context: context,
-                isScrollControlled: true,
-                backgroundColor: Colors.transparent,
-                builder: (_) => RandomTestSheet(books: open),
-              );
-            },
-          ),
-        ],
-      ),
+    return BandPage(
+      title: widget.subject.name,
+      uppercase: true,
+      actions: [
+        BandIconButton(
+          tooltip: 'Aralash test',
+          icon: Iconsax.shuffle,
+          onPressed: () {
+            final open = _books.where((b) => !b.fullBlock && b.sections.isNotEmpty).toList();
+            if (open.isEmpty) {
+              Session.toast("Aralash test uchun ochiq kitob yo'q", error: true);
+              return;
+            }
+            showModalBottomSheet<void>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => RandomTestSheet(books: open),
+            );
+          },
+        ),
+      ],
       body: AsyncView<List<Book>>(
         load: _load,
         isEmpty: (b) => b.isEmpty,
         emptyTitle: "Bu fanda kitob yo'q",
         emptyIcon: Iconsax.book_1,
         builder: (context, books, refresh) => RefreshIndicator(
-          color: AppColors.primary,
+          color: context.mc.spinner,
           onRefresh: refresh,
           child: BooksGrid(
             books: books,
-            header: const SizedBox(height: 16),
+            header: const SizedBox(height: 14),
             onTap: (b) => openBook(context, b, () => BookScreen(book: b)),
           ),
         ),
@@ -139,104 +138,165 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
     await QuizLauncher.startRandom(ctx, sectionIds: _selected.toList(), count: count);
   }
 
+  Widget _check(bool? value, VoidCallback onTap) {
+    final c = context.mc;
+    final on = value != false;
+    return PressScale(
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 180),
+          width: 24,
+          height: 24,
+          decoration: BoxDecoration(
+            color: on ? c.checkOn : c.card,
+            borderRadius: BorderRadius.circular(5),
+            border: Border.all(color: on ? c.checkOn : c.checkBd, width: 1.5),
+          ),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 160),
+            child: value == null
+                ? Center(key: const ValueKey('m'), child: Container(width: 10, height: 2.4, color: c.checkMark))
+                : value
+                    ? MahadIcon(MahadIcons.check, key: const ValueKey('c'), size: 18, color: c.checkMark)
+                    : const SizedBox.shrink(key: ValueKey('e')),
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final c = context.mc;
     final bottom = MediaQuery.of(context).viewInsets.bottom;
     return Container(
       constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.88),
-      decoration: const BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      decoration: BoxDecoration(
+        color: c.sheetBg,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       ),
+      clipBehavior: Clip.antiAlias,
       padding: EdgeInsets.only(bottom: bottom),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Container(
-            padding: const EdgeInsets.fromLTRB(20, 20, 12, 20),
-            decoration: const BoxDecoration(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-              gradient: LinearGradient(colors: [Color(0xFF4CAF6E), Color(0xFF7CC896)]),
-            ),
-            child: Row(
-              children: [
-                const Expanded(
-                  child: Text("Kitoblar va bo'limlar", style: TextStyle(color: Colors.white, fontSize: 21, fontWeight: FontWeight.w700)),
-                ),
-                IconButton(
-                  style: IconButton.styleFrom(backgroundColor: Colors.white.withValues(alpha: 0.25)),
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Iconsax.close_circle, color: Colors.white),
-                ),
-              ],
+          BandBackground(
+            height: 66,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 0, 12, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text("Kitoblar va bo'limlar", style: AppTheme.display(24, FontWeight.w700, 28, c.bandText)),
+                  ),
+                  BandIconButton(asset: MahadIcons.close, onPressed: () => Navigator.pop(context)),
+                ],
+              ),
             ),
           ),
           Flexible(
             child: ListView(
               shrinkWrap: true,
-              padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+              padding: const EdgeInsets.fromLTRB(4, 8, 8, 8),
               children: [
                 for (final b in widget.books) ...[
-                  ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    leading: Checkbox(
-                      tristate: true,
-                      value: _bookState(b),
-                      activeColor: AppColors.primary,
-                      onChanged: (_) => _toggleBook(b),
-                    ),
-                    title: Text(b.name, style: const TextStyle(fontWeight: FontWeight.w500)),
-                    subtitle: Text("${b.sections.length} ta bo'lim"),
-                    trailing: IconButton(
-                      icon: Icon(_expanded.contains(b.id) ? Iconsax.arrow_up_2 : Iconsax.arrow_down_1),
-                      onPressed: () => setState(() => _expanded.contains(b.id) ? _expanded.remove(b.id) : _expanded.add(b.id)),
-                    ),
+                  InkWell(
                     onTap: () => _toggleBook(b),
-                  ),
-                  if (_expanded.contains(b.id))
-                    for (final s in b.sections)
-                      CheckboxListTile(
-                        contentPadding: const EdgeInsets.only(left: 56, right: 16),
-                        dense: true,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        activeColor: AppColors.primary,
-                        value: _selected.contains(s.id),
-                        title: Text(s.name),
-                        secondary: _sectionCounts[s.id] == null
-                            ? null
-                            : Text('${_sectionCounts[s.id]} ta', style: const TextStyle(color: AppColors.textMuted)),
-                        onChanged: (v) => setState(() => v == true ? _selected.add(s.id) : _selected.remove(s.id)),
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
+                      child: Row(
+                        children: [
+                          _check(_bookState(b), () => _toggleBook(b)),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(b.name, style: AppTheme.body(15, FontWeight.w600, 20, c.ink)),
+                                Text("${b.sections.length} ta bo'lim", style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted)),
+                              ],
+                            ),
+                          ),
+                          PressScale(
+                            child: Material(
+                              color: c.card,
+                              shape: CircleBorder(side: BorderSide(color: c.frame)),
+                              child: InkWell(
+                                customBorder: const CircleBorder(),
+                                onTap: () => setState(() => _expanded.contains(b.id) ? _expanded.remove(b.id) : _expanded.add(b.id)),
+                                child: SizedBox(
+                                  width: 30,
+                                  height: 30,
+                                  child: Center(
+                                    child: AnimatedRotation(
+                                      turns: _expanded.contains(b.id) ? 0.5 : 0,
+                                      duration: const Duration(milliseconds: 220),
+                                      child: MahadIcon(MahadIcons.chevronDown, size: 16, color: c.goldText),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                        ],
                       ),
+                    ),
+                  ),
+                  AnimatedSize(
+                    duration: const Duration(milliseconds: 240),
+                    curve: Curves.easeOutCubic,
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      children: [
+                        if (_expanded.contains(b.id))
+                          for (final s in b.sections)
+                            InkWell(
+                              onTap: () => setState(() => _selected.contains(s.id) ? _selected.remove(s.id) : _selected.add(s.id)),
+                              child: Padding(
+                                padding: const EdgeInsets.fromLTRB(52, 9, 16, 9),
+                                child: Row(
+                                  children: [
+                                    _check(_selected.contains(s.id), () => setState(() => _selected.contains(s.id) ? _selected.remove(s.id) : _selected.add(s.id))),
+                                    const SizedBox(width: 12),
+                                    Expanded(child: Text(s.name, style: AppTheme.body(14, FontWeight.w400, 19, c.ink))),
+                                    if (_sectionCounts[s.id] != null)
+                                      Text('${_sectionCounts[s.id]} ta', style: AppTheme.body(12.5, FontWeight.w400, 17, c.muted).copyWith(letterSpacing: 0.6)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ),
                 ],
               ],
             ),
           ),
+          Container(height: 1, color: c.hair),
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
             child: Column(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: const Color(0xFFCBE8D4), width: 1.5),
-                  ),
+                DoubleFrame(
+                  padding: const EdgeInsets.all(12),
                   child: Row(
                     children: [
                       Container(
-                        width: 56,
-                        height: 56,
-                        decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(14)),
-                        child: const Icon(Iconsax.task, color: Colors.white, size: 28),
+                        width: 50,
+                        height: 50,
+                        decoration: ShapeDecoration(color: c.emerald, shape: octagonBorder(50, side: BorderSide(color: c.gold.withValues(alpha: 0.6)))),
+                        child: Center(child: MIcon(Iconsax.task, color: c.bandText, size: 24)),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: 14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               _selected.isEmpty || _sectionCounts.isEmpty ? 'Test soni' : 'Test soni (mavjud: $_available)',
-                              style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600),
+                              style: AppTheme.body(12.5, FontWeight.w600, 17, c.muted),
                             ),
                             const SizedBox(height: 6),
                             TextField(
@@ -244,11 +304,11 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
                               keyboardType: TextInputType.number,
                               inputFormatters: [FilteringTextInputFormatter.digitsOnly, LengthLimitingTextInputFormatter(3)],
                               onChanged: (_) => setState(() {}),
-                              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.primary),
-                              decoration: const InputDecoration(
+                              style: AppTheme.display(28, FontWeight.w700, 32, c.icon),
+                              decoration: InputDecoration(
                                 isDense: true,
-                                fillColor: Color(0xFFF4FAF6),
-                                contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                fillColor: c.inputBg,
+                                contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                               ),
                             ),
                           ],
@@ -257,11 +317,11 @@ class _RandomTestSheetState extends State<RandomTestSheet> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                ElevatedButton.icon(
+                const SizedBox(height: 14),
+                MahadButton(
                   onPressed: _valid ? _start : null,
-                  icon: const Icon(Iconsax.play),
-                  label: const Text('Testni boshlash'),
+                  icon: Iconsax.play,
+                  label: 'Testni boshlash',
                 ),
               ],
             ),

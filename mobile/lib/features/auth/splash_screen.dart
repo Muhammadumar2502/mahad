@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/device.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
+import '../../widgets/common.dart';
 import '../../data/repository.dart';
 import '../home/main_shell.dart';
 import 'login_screen.dart';
@@ -62,25 +64,31 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primary,
-      body: Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset('assets/images/splash_logo.png', width: 120),
-            const SizedBox(height: 20),
-            const Text(
-              'Mahad Test',
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.w700),
+    final c = context.mc;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: c.bandEnd,
+        body: BandBackground(
+          height: MediaQuery.of(context).size.height,
+          child: Center(
+            child: FadeSlideIn(
+              offset: 18,
+              duration: const Duration(milliseconds: 600),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Image.asset('assets/logo/seal_gold_1152.png', width: 168),
+                  const SizedBox(height: 22),
+                  Text('Mahad Test', style: AppTheme.display(40, FontWeight.w600, 44, c.bandText).copyWith(letterSpacing: 1)),
+                  const SizedBox(height: 6),
+                  const Ornament(width: 30),
+                  const SizedBox(height: 30),
+                  MahadSpinner(size: 28, color: c.bandOrn, track: c.bandOrn.withValues(alpha: 0.25)),
+                ],
+              ),
             ),
-            const SizedBox(height: 28),
-            const SizedBox(
-              width: 26,
-              height: 26,
-              child: CircularProgressIndicator(color: Colors.white, strokeWidth: 3),
-            ),
-          ],
+          ),
         ),
       ),
     );

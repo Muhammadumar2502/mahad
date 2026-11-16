@@ -108,33 +108,59 @@ class _ReviewScreenState extends State<ReviewScreen> {
     }).toList();
     final wrong = all.where((i) => !i.isCorrect).length;
 
-    return Scaffold(
-      appBar: AppBar(title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis)),
+    return BandPage(
+      title: widget.title,
       body: Column(
         children: [
-          Container(
-            color: AppColors.surface,
-            padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
-            child: SegmentedButton<_Filter>(
-              showSelectedIcon: false,
-              segments: [
-                ButtonSegment(value: _Filter.all, label: Text('Hammasi (${all.length})')),
-                ButtonSegment(value: _Filter.wrong, label: Text('Xato ($wrong)')),
-                ButtonSegment(value: _Filter.correct, label: Text("To'g'ri (${all.length - wrong})")),
-              ],
-              selected: {_filter},
-              onSelectionChanged: (v) => setState(() => _filter = v.first),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+            child: DoubleFrame(
+              padding: const EdgeInsets.all(3),
+              child: Row(
+                children: [
+                  for (final (f, label) in [
+                    (_Filter.all, 'Hammasi (${all.length})'),
+                    (_Filter.wrong, 'Xato ($wrong)'),
+                    (_Filter.correct, "To'g'ri (${all.length - wrong})"),
+                  ])
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => setState(() => _filter = f),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 220),
+                          curve: Curves.easeOutCubic,
+                          height: 38,
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            gradient: _filter == f ? LinearGradient(colors: [context.mc.primaryStart, context.mc.primaryEnd]) : null,
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppTheme.body(13.5, _filter == f ? FontWeight.w600 : FontWeight.w500, 18, _filter == f ? context.mc.priText : context.mc.ink),
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
           ),
           Expanded(
-            child: shown.isEmpty
-                ? const EmptyView(title: "Bu bo'limda savol yo'q", icon: Iconsax.filter_remove)
-                : ListView.separated(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: shown.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 12),
-                    itemBuilder: (_, i) => _card(shown[i].$1 + 1, shown[i].$2),
-                  ),
+            child: AnimatedSwitcher(
+              duration: const Duration(milliseconds: 250),
+              child: shown.isEmpty
+                  ? const EmptyView(key: ValueKey('empty'), title: "Bu bo'limda savol yo'q", icon: Iconsax.filter_remove)
+                  : ListView.separated(
+                      key: ValueKey(_filter),
+                      padding: const EdgeInsets.fromLTRB(16, 10, 16, 24),
+                      itemCount: shown.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (_, i) => FadeSlideIn(index: i, child: _card(shown[i].$1 + 1, shown[i].$2)),
+                    ),
+            ),
           ),
         ],
       ),
@@ -142,68 +168,61 @@ class _ReviewScreenState extends State<ReviewScreen> {
   }
 
   Widget _card(int n, ReviewItem it) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('$n-savol', style: const TextStyle(color: AppColors.textMuted, fontWeight: FontWeight.w600)),
-                const Spacer(),
-                if (it.isEmpty)
-                  const Pill(text: 'Javobsiz', color: AppColors.orange, background: AppColors.orangeSoft)
-                else if (it.isCorrect)
-                  const Pill(text: "To'g'ri", color: AppColors.primaryDark, background: AppColors.primarySoft)
-                else
-                  const Pill(text: 'Xato', color: AppColors.red, background: AppColors.redSoft),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(it.question, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600, height: 1.3)),
-            const SizedBox(height: 10),
-            for (final e in it.options.entries) _option(e.key, e.value, it),
-          ],
-        ),
+    final c = context.mc;
+    return DoubleFrame(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text('$n-savol', style: AppTheme.body(13, FontWeight.w500, 18, c.muted)),
+              const Spacer(),
+              if (it.isEmpty)
+                Pill.tone(context, text: 'Javobsiz', tone: PillTone.warn)
+              else if (it.isCorrect)
+                Pill.tone(context, text: "To'g'ri", tone: PillTone.ok)
+              else
+                Pill.tone(context, text: 'Xato', tone: PillTone.bad),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(it.question, style: AppTheme.body(16, FontWeight.w600, 23, c.ink)),
+          const SizedBox(height: 10),
+          for (final e in it.options.entries) _option(e.key, e.value, it),
+        ],
       ),
     );
   }
 
   Widget _option(String letter, String text, ReviewItem it) {
+    final c = context.mc;
     final correct = letter == it.correct;
     final mineWrong = letter == it.mine && !correct;
-    final color = correct ? AppColors.primary : (mineWrong ? AppColors.red : AppColors.textMuted);
+    final color = correct ? c.okText : (mineWrong ? c.badText : c.ink);
+    final fill = correct ? c.ok : (mineWrong ? c.bad : c.letterBg);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            width: 26,
-            height: 26,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: correct ? AppColors.primary : (mineWrong ? AppColors.red : AppColors.background),
-              borderRadius: BorderRadius.circular(8),
+            width: 24,
+            height: 24,
+            decoration: ShapeDecoration(color: fill, shape: octagonBorder(24, side: BorderSide(color: correct || mineWrong ? fill : c.letterBd))),
+            child: Center(
+              child: correct
+                  ? MahadIcon(MahadIcons.check, size: 14, color: c.okOn)
+                  : mineWrong
+                      ? MahadIcon(MahadIcons.close, size: 13, color: c.badOn)
+                      : Text(letter, style: AppTheme.display(13, FontWeight.w700, 14, c.letterText)),
             ),
-            child: correct
-                ? const Icon(Iconsax.tick_circle, size: 16, color: Colors.white)
-                : mineWrong
-                    ? const Icon(Iconsax.close_circle, size: 16, color: Colors.white)
-                    : Text(letter, style: const TextStyle(fontWeight: FontWeight.w700, color: AppColors.textMuted, fontSize: 12)),
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.only(top: 3),
-              child: Text(
-                text,
-                style: TextStyle(
-                  color: correct || mineWrong ? color : AppColors.text,
-                  fontWeight: correct ? FontWeight.w600 : FontWeight.w400,
-                ),
-              ),
+              padding: const EdgeInsets.only(top: 2),
+              child: Text(text, style: AppTheme.body(14.5, correct || mineWrong ? FontWeight.w600 : FontWeight.w400, 21, color)),
             ),
           ),
         ],

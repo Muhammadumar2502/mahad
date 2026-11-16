@@ -101,61 +101,63 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
       key: _view,
       load: Repo.subjects,
       builder: (context, subjects, refresh) {
+        final c = context.mc;
         final q = _search.text.trim().toLowerCase();
         final shown = q.isEmpty ? subjects : subjects.where((s) => s.name.toLowerCase().contains(q)).toList();
         return RefreshIndicator(
-          color: AppColors.primary,
+          color: c.spinner,
           onRefresh: _refreshAll,
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             slivers: [
-              if (_unfinished != null) SliverToBoxAdapter(child: _banner(_unfinished!)),
+              if (_unfinished != null)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 14),
+                  sliver: SliverToBoxAdapter(child: FadeSlideIn(child: _banner(_unfinished!))),
+                ),
               SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 0),
                 sliver: SliverToBoxAdapter(
                   child: Column(
                     children: [
-                      TextField(
+                      MahadSearchField(
                         controller: _search,
+                        hint: 'Fan qidirish',
                         onChanged: (_) => setState(() {}),
-                        decoration: InputDecoration(
-                          hintText: 'Fan qidirish',
-                          fillColor: AppColors.surface,
-                          prefixIcon: const Icon(Iconsax.search_normal_1, color: AppColors.primary),
-                          suffixIcon: _search.text.isEmpty
-                              ? null
-                              : IconButton(
-                                  icon: const Icon(Iconsax.close_circle),
-                                  onPressed: () => setState(_search.clear),
-                                ),
-                        ),
+                        onClear: () => setState(_search.clear),
                       ),
                       const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
-                            child: _actionButton(
-                              label: 'Liderlar',
-                              icon: Iconsax.cup_copy,
-                              colors: const [Color(0xFFFF9A3C), Color(0xFFFFB25E)],
-                              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RateScreen())),
+                            child: FadeSlideIn(
+                              index: 1,
+                              child: _actionButton(
+                                label: 'Liderlar',
+                                icon: Iconsax.cup_copy,
+                                iconColor: c.goldText,
+                                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const RateScreen())),
+                              ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
-                            child: _actionButton(
-                              label: 'Maxsus',
-                              icon: Iconsax.star_1,
-                              colors: const [Color(0xFF4CAF6E), Color(0xFF6CC28A)],
-                              badge: _activeSpecial,
-                              onTap: () => _afterReturn(
-                                Navigator.push(context, MaterialPageRoute(builder: (_) => const SpecialTestsScreen())),
+                            child: FadeSlideIn(
+                              index: 2,
+                              child: _actionButton(
+                                label: 'Maxsus',
+                                icon: Iconsax.star_1,
+                                iconColor: c.icon,
+                                badge: _activeSpecial,
+                                onTap: () => _afterReturn(
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const SpecialTestsScreen())),
+                                ),
                               ),
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 14),
                     ],
                   ),
                 ),
@@ -172,16 +174,16 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
                 )
               else
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
                   sliver: SliverGrid(
                     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                       crossAxisCount: 2,
-                      mainAxisSpacing: 14,
-                      crossAxisSpacing: 14,
-                      childAspectRatio: 0.92,
+                      mainAxisSpacing: 12,
+                      crossAxisSpacing: 12,
+                      childAspectRatio: 0.8,
                     ),
                     delegate: SliverChildBuilderDelegate(
-                      (_, i) => _subjectCard(shown[i]),
+                      (_, i) => FadeSlideIn(index: i + 3, child: _subjectCard(shown[i])),
                       childCount: shown.length,
                     ),
                   ),
@@ -194,49 +196,43 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   Widget _banner(QuizSession s) {
+    final c = context.mc;
     final rem = s.totalRemaining;
     final subtitle = (s.isFinished || s.isExpired)
         ? 'Natija yuborilmoqda...'
         : rem != null
             ? '${s.title} · ${formatDuration(rem)}'
             : '${s.title} · ${s.answeredCount}/${s.total} javob';
-    return Container(
-      padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF53B175), Color(0xFF6979F8)]),
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.28), blurRadius: 30, offset: const Offset(0, 16), spreadRadius: -20)],
       ),
-      child: Row(
-        children: [
-          Container(
-            width: 46,
-            height: 46,
-            decoration: BoxDecoration(color: Colors.white.withValues(alpha: 0.2), borderRadius: BorderRadius.circular(12)),
-            child: const Icon(Iconsax.clock, color: Colors.white, size: 28),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Tugallanmagan test', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 2),
-                Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontSize: 13)),
-              ],
+      child: DoubleFrame(
+        padding: const EdgeInsets.fromLTRB(12, 10, 10, 10),
+        child: Row(
+          children: [
+            const StarMedallion(icon: Iconsax.clock, size: 44, tone: MedallionTone.soft),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Tugallanmagan test', style: AppTheme.display(21, FontWeight.w700, 25, c.ink)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: AppTheme.body(13, FontWeight.w400, 18, c.muted)),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.white,
-              foregroundColor: AppColors.primary,
-              minimumSize: const Size(0, 42),
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            const SizedBox(width: 8),
+            MahadButton(
+              label: 'Davom et',
+              height: 44,
+              expand: false,
+              onPressed: () => _afterReturn(QuizLauncher.open(context, s)),
             ),
-            onPressed: () => _afterReturn(QuizLauncher.open(context, s)),
-            child: const Text('Davom et'),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -244,28 +240,42 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   Widget _actionButton({
     required String label,
     required IconData icon,
-    required List<Color> colors,
+    required Color iconColor,
     required VoidCallback onTap,
     int badge = 0,
   }) {
+    final c = context.mc;
     return Stack(
       clipBehavior: Clip.none,
       children: [
-        Material(
-          borderRadius: BorderRadius.circular(14),
-          clipBehavior: Clip.antiAlias,
-          child: Ink(
-            height: 56,
-            decoration: BoxDecoration(gradient: LinearGradient(colors: colors)),
+        PressScale(
+          child: Material(
+            color: c.card,
+            shape: MihrabBorder(side: BorderSide(color: c.frame), shoulder: 0.42),
+            clipBehavior: Clip.antiAlias,
             child: InkWell(
               onTap: onTap,
-              child: Center(
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
+              child: SizedBox(
+                height: 118,
+                child: Stack(
                   children: [
-                    Icon(icon, color: Colors.white),
-                    const SizedBox(width: 8),
-                    Text(label, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w700)),
+                    Positioned.fill(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(5, 5, 5, 0),
+                        child: DecoratedBox(decoration: ShapeDecoration(shape: MihrabBorder(side: BorderSide(color: c.frameIn), shoulder: 0.42))),
+                      ),
+                    ),
+                    Align(
+                      alignment: const Alignment(0, 0.55),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          MIcon(icon, color: iconColor, size: 24),
+                          const SizedBox(height: 6),
+                          Text(label, style: AppTheme.display(23, FontWeight.w700, 26, c.ink)),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -274,17 +284,23 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
         ),
         if (badge > 0)
           Positioned(
-            right: -4,
-            top: -6,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
-              constraints: const BoxConstraints(minWidth: 22),
-              decoration: BoxDecoration(
-                color: AppColors.red,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white, width: 2),
+            right: 10,
+            top: 4,
+            child: TweenAnimationBuilder<double>(
+              tween: Tween(begin: 0.4, end: 1),
+              duration: const Duration(milliseconds: 420),
+              curve: Curves.elasticOut,
+              builder: (_, v, child) => Transform.scale(scale: v, child: child),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
+                decoration: BoxDecoration(
+                  color: c.badge,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: c.card, width: 2),
+                ),
+                child: Center(child: Text('$badge', textAlign: TextAlign.center, style: AppTheme.body(12, FontWeight.w700, 16, c.badgeText))),
               ),
-              child: Text('$badge', textAlign: TextAlign.center, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w700)),
             ),
           ),
       ],
@@ -292,42 +308,36 @@ class HomeTabState extends State<HomeTab> with WidgetsBindingObserver {
   }
 
   Widget _subjectCard(Subject s) {
-    return Material(
-      color: AppColors.primarySoft,
-      borderRadius: BorderRadius.circular(18),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(18),
-        onTap: () => _afterReturn(
-          Navigator.push(context, MaterialPageRoute(builder: (_) => SubjectBooksScreen(subject: s))),
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFF4CAF50), width: 2),
+    final c = context.mc;
+    return PressScale(
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: () => _afterReturn(
+            Navigator.push(context, MaterialPageRoute(builder: (_) => SubjectBooksScreen(subject: s))),
           ),
-          padding: const EdgeInsets.all(12),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: 92,
-                height: 92,
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(8),
+          child: DoubleFrame(
+            padding: const EdgeInsets.fromLTRB(10, 14, 10, 12),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ArchPlate(
+                  width: 104,
+                  height: 126,
+                  color: c.subjectPlate,
                   child: NetImage(path: s.image, fallbackIcon: Iconsax.teacher),
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                s.name,
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  s.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.center,
+                  style: AppTheme.display(22, FontWeight.w700, 26, c.ink).copyWith(letterSpacing: 2.6),
+                ),
+              ],
+            ),
           ),
         ),
       ),

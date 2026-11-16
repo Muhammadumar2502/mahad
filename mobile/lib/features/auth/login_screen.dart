@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:mask_text_input_formatter/mask_text_input_formatter.dart';
+import 'package:flutter/services.dart';
 
 import '../../core/api_client.dart';
 import '../../core/device.dart';
 import '../../core/session.dart';
 import '../../core/theme.dart';
+import '../../widgets/common.dart';
 import '../../data/repository.dart';
 import '../home/main_shell.dart';
 
@@ -73,98 +75,146 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      body: SafeArea(
-        child: Center(
+    final c = context.mc;
+    final mq = MediaQuery.of(context);
+    const band = 170.0;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(statusBarColor: Colors.transparent),
+      child: Scaffold(
+        backgroundColor: c.pageFlat,
+        body: DecoratedBox(
+          decoration: BoxDecoration(gradient: c.pageGradient),
           child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Center(
-                  child: Container(
-                    width: 96,
-                    height: 96,
-                    padding: const EdgeInsets.all(14),
-                    decoration: BoxDecoration(color: AppColors.primary, borderRadius: BorderRadius.circular(28)),
-                    child: Image.asset('assets/images/splash_logo.png'),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                const Text('Xush kelibsiz!', textAlign: TextAlign.center, style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700)),
-                const SizedBox(height: 6),
-                const Text(
-                  'Telefon raqam va parolingiz bilan kiring',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted),
-                ),
-                const SizedBox(height: 32),
-                const Text('Telefon raqam', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _phone,
-                  inputFormatters: [_mask],
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.next,
-                  onChanged: (_) => setState(() {}),
-                  style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-                  decoration: const InputDecoration(
-                    hintText: '90 123 45 67',
-                    prefixIcon: Padding(
-                      padding: EdgeInsets.only(left: 16, right: 8),
-                      child: Text('+998', style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600)),
-                    ),
-                    prefixIconConstraints: BoxConstraints(minWidth: 0, minHeight: 0),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text('Parol', style: TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: _password,
-                  obscureText: _obscure,
-                  textInputAction: TextInputAction.done,
-                  onChanged: (_) => setState(() {}),
-                  onSubmitted: (_) => _submit(),
-                  decoration: InputDecoration(
-                    hintText: 'Kamida 8 ta belgi',
-                    suffixIcon: IconButton(
-                      icon: Icon(_obscure ? Iconsax.eye_slash : Iconsax.eye),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(color: AppColors.redSoft, borderRadius: BorderRadius.circular(12)),
-                    child: Row(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: mq.size.height),
+              child: Stack(
+                children: [
+                  const BandBackground(height: band),
+                  Padding(
+                    padding: EdgeInsets.fromLTRB(24, band - 54, 24, 24 + mq.padding.bottom),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        const Icon(Iconsax.danger, color: AppColors.red),
-                        const SizedBox(width: 10),
-                        Expanded(child: Text(_error!, style: const TextStyle(color: AppColors.red))),
+                        Center(
+                          child: FadeSlideIn(
+                            child: Container(
+                              width: 108,
+                              height: 108,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(26),
+                                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.35), blurRadius: 24, offset: const Offset(0, 12), spreadRadius: -10)],
+                              ),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(26),
+                                child: Image.asset('assets/logo/splash_logo_512.png', fit: BoxFit.cover),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        Text('Xush kelibsiz!', textAlign: TextAlign.center, style: AppTheme.display(36, FontWeight.w700, 40, c.ink)),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Telefon raqam va parolingiz bilan kiring',
+                          textAlign: TextAlign.center,
+                          style: AppTheme.body(14, FontWeight.w400, 20, c.muted),
+                        ),
+                        const SizedBox(height: 28),
+                        Text('Telefon raqam', style: AppTheme.body(13.5, FontWeight.w600, 18, c.ink)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _phone,
+                          inputFormatters: [_mask],
+                          keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.next,
+                          onChanged: (_) => setState(() {}),
+                          style: AppTheme.body(16.5, FontWeight.w500, 22, c.ink),
+                          decoration: InputDecoration(
+                            hintText: '90 123 45 67',
+                            fillColor: c.inputBg,
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.only(left: 16, right: 12),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text('+998', style: AppTheme.body(16.5, FontWeight.w700, 22, c.ink)),
+                                  const SizedBox(width: 12),
+                                  Container(width: 1, height: 22, color: c.hair),
+                                ],
+                              ),
+                            ),
+                            prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+                          ),
+                        ),
+                        const SizedBox(height: 18),
+                        Text('Parol', style: AppTheme.body(13.5, FontWeight.w600, 18, c.ink)),
+                        const SizedBox(height: 8),
+                        TextField(
+                          controller: _password,
+                          obscureText: _obscure,
+                          textInputAction: TextInputAction.done,
+                          onChanged: (_) => setState(() {}),
+                          onSubmitted: (_) => _submit(),
+                          style: AppTheme.body(16.5, FontWeight.w500, 22, c.ink),
+                          decoration: InputDecoration(
+                            hintText: 'Kamida 8 ta belgi',
+                            fillColor: c.inputBg,
+                            suffixIcon: IconButton(
+                              icon: AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 180),
+                                child: MIcon(_obscure ? Iconsax.eye_slash : Iconsax.eye, key: ValueKey(_obscure), color: c.muted, size: 21),
+                              ),
+                              onPressed: () => setState(() => _obscure = !_obscure),
+                            ),
+                          ),
+                        ),
+                        AnimatedSize(
+                          duration: const Duration(milliseconds: 240),
+                          curve: Curves.easeOutCubic,
+                          child: _error == null
+                              ? const SizedBox(width: double.infinity)
+                              : Padding(
+                                  padding: const EdgeInsets.only(top: 16),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(12),
+                                    decoration: BoxDecoration(
+                                      color: c.badTint,
+                                      borderRadius: BorderRadius.circular(10),
+                                      border: Border.all(color: c.bad.withValues(alpha: 0.5)),
+                                    ),
+                                    child: Row(
+                                      children: [
+                                        StarMedallion(
+                                          size: 24,
+                                          tone: MedallionTone.bad,
+                                          child: Text('!', style: AppTheme.body(12, FontWeight.w800, 14, c.bad)),
+                                        ),
+                                        const SizedBox(width: 10),
+                                        Expanded(child: Text(_error!, style: AppTheme.body(13.5, FontWeight.w600, 19, c.badText))),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                        ),
+                        const SizedBox(height: 24),
+                        MahadButton(
+                          onPressed: _valid && !_loading ? _submit : null,
+                          loading: _loading,
+                          label: 'Kirish',
+                        ),
+                        const SizedBox(height: 22),
+                        Text(
+                          'Har bir akkaunt faqat bitta qurilmada ishlaydi.\nQurilmani almashtirish uchun admin bilan bog\'laning.',
+                          textAlign: TextAlign.center,
+                          style: AppTheme.body(12.5, FontWeight.w400, 18, c.muted),
+                        ),
+                        const SizedBox(height: 8),
+                        Text('v${DeviceData.appVersion}', textAlign: TextAlign.center, style: AppTheme.body(12, FontWeight.w400, 16, c.muted)),
                       ],
                     ),
                   ),
                 ],
-                const SizedBox(height: 28),
-                ElevatedButton(
-                  onPressed: _valid && !_loading ? _submit : null,
-                  child: _loading
-                      ? const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.white))
-                      : const Text('Kirish'),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Har bir akkaunt faqat bitta qurilmada ishlaydi.\nQurilmani almashtirish uchun admin bilan bog\'laning.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: AppColors.textMuted.withValues(alpha: 0.9), fontSize: 12.5),
-                ),
-                const SizedBox(height: 8),
-                Text('v${DeviceData.appVersion}', textAlign: TextAlign.center, style: const TextStyle(color: AppColors.textMuted, fontSize: 12)),
-              ],
+              ),
             ),
           ),
         ),
