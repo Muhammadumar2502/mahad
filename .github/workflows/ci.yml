@@ -24,8 +24,8 @@ jobs:
       run:
         working-directory: mobile
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: "17"
@@ -40,10 +40,18 @@ jobs:
         run: flutter analyze
       - name: Unit tests
         run: flutter test
+      # The NDK download on hosted runners is occasionally corrupt; install it up front with retries.
+      - name: Install Android NDK (retry)
+        run: |
+          for i in 1 2 3; do
+            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "ndk;28.2.13676358" > /dev/null && exit 0
+            echo "NDK install attempt $i failed, retrying..."; sleep 15
+          done
+          exit 1
       - name: Build debug APK
         run: flutter build apk --debug
       - name: Upload APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: mahad-debug-apk
           path: mobile/build/app/outputs/flutter-apk/app-debug.apk
@@ -57,8 +65,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -81,8 +89,8 @@ jobs:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: "22"
           cache: npm
@@ -100,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Build backend image
         run: docker build -t mahad-backend:ci ./backend
       - name: Build nginx (web) image
